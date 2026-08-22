@@ -1,0 +1,102 @@
+<div class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>🏆 Individual Champions Management</h2>
+        
+        <!-- Publish Toggle Form -->
+        <form action="/admin/champions/toggle" method="POST" class="m-0">
+            {{#if isPublished}}
+                <button type="submit" class="btn btn-danger btn-sm">Hide from Public (Unpublish)</button>
+                <span class="text-success ms-2 fw-bold small">● Visible to Public</span>
+            {{else}}
+                <button type="submit" class="btn btn-success btn-sm">Publish to Public</button>
+                <span class="text-muted ms-2 small">○ Hidden from Public</span>
+            {{/if}}
+        </form>
+    </div>
+
+    <div class="row g-4">
+        <!-- Sub Junior Boys -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-primary h-100">
+                <div class="card-header bg-primary text-white fw-bold">Sub Junior — Boys</div>
+                <div class="card-body">
+                    <h5 class="card-title text-dark">{{champions.subJuniorBoys.name}}</h5>
+                    <p class="card-text mb-1 text-muted">Chest No: <strong>{{champions.subJuniorBoys.chestNumber}}</strong></p>
+                    <p class="card-text mb-1 text-muted">Team: <strong>{{champions.subJuniorBoys.team}}</strong></p>
+                    <hr>
+                    <p class="card-text text-primary fw-bold mb-0">Total Points: {{champions.subJuniorBoys.totalPoints}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sub Junior Girls -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-danger h-100">
+                <div class="card-header bg-danger text-white fw-bold">Sub Junior — Girls</div>
+                <div class="card-body">
+                    <h5 class="card-title text-dark">{{champions.subJuniorGirls.name}}</h5>
+                    <p class="card-text mb-1 text-muted">Chest No: <strong>{{champions.subJuniorGirls.chestNumber}}</strong></p>
+                    <p class="card-text mb-1 text-muted">Team: <strong>{{champions.subJuniorGirls.team}}</strong></p>
+                    <hr>
+                    <p class="card-text text-danger fw-bold mb-0">Total Points: {{champions.subJuniorGirls.totalPoints}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Junior Boys -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-primary h-100">
+                <div class="card-header bg-primary text-white fw-bold">Junior — Boys</div>
+                <div class="card-body">
+                    <h5 class="card-title text-dark">{{champions.juniorBoys.name}}</h5>
+                    <p class="card-text mb-1 text-muted">Chest No: <strong>{{champions.juniorBoys.chestNumber}}</strong></p>
+                    <p class="card-text mb-1 text-muted">Team: <strong>{{champions.juniorBoys.team}}</strong></p>
+                    <hr>
+                    <p class="card-text text-primary fw-bold mb-0">Total Points: {{champions.juniorBoys.totalPoints}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Junior Girls -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-danger h-100">
+                <div class="card-header bg-danger text-white fw-bold">Junior — Girls</div>
+                <div class="card-body">
+                    <h5 class="card-title text-dark">{{champions.juniorGirls.name}}</h5>
+                    <p class="card-text mb-1 text-muted">Chest No: <strong>{{champions.juniorGirls.chestNumber}}</strong></p>
+                    <p class="card-text mb-1 text-muted">Team: <strong>{{champions.juniorGirls.team}}</strong></p>
+                    <hr>
+                    <p class="card-text text-danger fw-bold mb-0">Total Points: {{champions.juniorGirls.totalPoints}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Senior Boys -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-primary h-100">
+                <div class="card-header bg-primary text-white fw-bold">Senior — Boys</div>
+                <div class="card-body">
+                    <h5 class="card-title text-dark">{{champions.seniorBoys.name}}</h5>
+                    <p class="card-text mb-1 text-muted">Chest No: <strong>{{champions.seniorBoys.chestNumber}}</strong></p>
+                    <p class="card-text mb-1 text-muted">Team: <strong>{{champions.seniorBoys.team}}</strong></p>
+                    <hr>
+                    <p class="card-text text-primary fw-bold mb-0">Total Points: {{champions.seniorBoys.totalPoints}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Senior Girls -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-danger h-100">
+                <div class="card-header bg-danger text-white fw-bold">Senior — Girls</div>
+                <div class="card-body">
+                    <h5 class="card-title text-dark">{{champions.seniorGirls.name}}</h5>
+                    <p class="card-text mb-1 text-muted">Chest No: <strong>{{champions.seniorGirls.chestNumber}}</strong></p>
+                    <p class="card-text mb-1 text-muted">Team: <strong>{{champions.seniorGirls.team}}</strong></p>
+                    <hr>
+                    <p class="card-text text-danger fw-bold mb-0">Total Points: {{champions.seniorGirls.totalPoints}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

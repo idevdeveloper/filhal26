@@ -1,0 +1,218 @@
+<!-- 1. Launch Gate Screen -->
+<div id="launch-gate" class="min-h-[75vh] flex flex-col items-center justify-center text-center px-4">
+    <div class="max-w-md w-full py-16 px-8 bg-white rounded-2xl shadow-xl border border-gray-100">
+        <div class="mb-6">
+            <span class="inline-block p-4 bg-red-50 text-red-600 rounded-full text-3xl mb-3">🏆</span>
+            <h1 class="text-3xl font-extrabold text-gray-900">Filhal Fest 2026</h1>
+            <p class="text-gray-500 mt-2">Team Standings Official Reveal</p>
+        </div>
+        <button id="launch-btn" class="w-full py-4 px-8 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-xl shadow-lg transition transform active:scale-95">
+            🚀 LAUNCH
+        </button>
+    </div>
+</div>
+
+<!-- 2. Full-Screen Countdown Overlay (Hidden Initially) -->
+<div id="countdown-overlay" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center hidden">
+    <div class="text-center">
+        <p class="text-red-500 uppercase tracking-widest font-semibold mb-4 text-xl">Launching Standings in</p>
+        <div id="countdown-number" class="text-white text-9xl font-black animate-pulse">9</div>
+    </div>
+</div>
+
+<!-- 3. Actual Team Standings Content (Hidden Until Launch Completes) -->
+<div id="standings-content" class="hidden">
+    <div class="max-w-7xl mx-auto px-4 py-12">
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">TEAM STANDINGS</h1>
+        <p class="mt-2 text-gray-500">Live scoreboard and point breakdowns.</p>
+    </div>
+
+    <!-- Main Scoreboard -->
+    <div class="champ-gradient rounded-3xl p-1 shadow-2xl mb-12">
+        <div class="bg-white/10 backdrop-blur-xl rounded-[23px] p-8 md:p-12 flex flex-col md:flex-row justify-around items-center text-white text-center gap-8">
+            
+            <div class="flex-1">
+                <h2 class="text-2xl font-bold text-blue-200 tracking-widest uppercase mb-2">Hermos</h2>
+                <div class="text-7xl font-black">{{scores.Hermos.total}} <span class="text-2xl font-medium text-blue-200">pts</span></div>
+            </div>
+
+            <div class="flex-shrink-0 px-8">
+                <div class="text-sm font-bold text-indigo-200 uppercase tracking-widest mb-2">Current Champion</div>
+                {{#if (eq champion "DRAW")}}
+                    <div class="text-3xl font-black bg-white text-indigo-900 px-6 py-2 rounded-full inline-block">TIE SCORE</div>
+                {{else}}
+                    <div class="text-4xl font-black bg-white text-indigo-900 px-8 py-3 rounded-full inline-block shadow-[0_0_30px_rgba(255,255,255,0.3)]">🏆 {{champion}}</div>
+                {{/if}}
+            </div>
+
+            <div class="flex-1">
+                <h2 class="text-2xl font-bold text-red-200 tracking-widest uppercase mb-2">Gibraltar</h2>
+                <div class="text-7xl font-black">{{scores.Gibraltar.total}} <span class="text-2xl font-medium text-red-200">pts</span></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Boys / Girls Filter Toggle Bar -->
+    <div class="max-w-4xl mx-auto mb-8 flex justify-center">
+        <div class="bg-gray-200 p-1.5 rounded-2xl flex gap-2 shadow-inner">
+            <button onclick="switchGender('boys')" id="btn-boys" class="px-8 py-3 rounded-xl font-extrabold text-sm transition bg-white text-gray-900 shadow-sm">
+                👦 Boys Breakdown
+            </button>
+            <button onclick="switchGender('girls')" id="btn-girls" class="px-8 py-3 rounded-xl font-extrabold text-sm transition text-gray-600 hover:text-gray-900">
+                👧 Girls Breakdown
+            </button>
+        </div>
+    </div>
+
+    <!-- Detailed Breakdowns UI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <!-- Hermos Breakdown Card -->
+        <div class="bg-white rounded-2xl shadow-sm border-t-4 border-blue-500 p-8">
+            <h3 class="text-2xl font-black text-gray-900 mb-6 text-center">Hermos Breakdown</h3>
+            
+            <!-- Boys View -->
+            <div id="hermos-boys" class="space-y-4">
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">Sub Junior</span> <span class="font-bold text-gray-900">{{lookup scores.Hermos.boys "Sub Junior"}}</span></div>
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">Junior</span> <span class="font-bold text-gray-900">{{scores.Hermos.boys.Junior}}</span></div>
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">Senior</span> <span class="font-bold text-gray-900">{{scores.Hermos.boys.Senior}}</span></div>
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">General</span> <span class="font-bold text-gray-900">{{scores.Hermos.boys.General}}</span></div>
+                <div class="flex justify-between pt-2 border-t-2 border-gray-200"><span class="text-gray-900 font-black">Total Boys Points</span> <span class="font-black text-blue-600 text-lg">{{scores.Hermos.boys.total}}</span></div>
+            </div>
+
+            <!-- Girls View (Hidden by default) -->
+            <div id="hermos-girls" class="space-y-4 hidden">
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">Sub Junior</span> <span class="font-bold text-gray-900">{{lookup scores.Hermos.girls "Sub Junior"}}</span></div>
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">Junior</span> <span class="font-bold text-gray-900">{{scores.Hermos.girls.Junior}}</span></div>
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">Senior</span> <span class="font-bold text-gray-900">{{scores.Hermos.girls.Senior}}</span></div>
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">General</span> <span class="font-bold text-gray-900">{{scores.Hermos.girls.General}}</span></div>
+                <div class="flex justify-between pt-2 border-t-2 border-gray-200"><span class="text-gray-900 font-black">Total Girls Points</span> <span class="font-black text-blue-600 text-lg">{{scores.Hermos.girls.total}}</span></div>
+            </div>
+        </div>
+
+        <!-- Gibraltar Breakdown Card -->
+        <div class="bg-white rounded-2xl shadow-sm border-t-4 border-red-500 p-8">
+            <h3 class="text-2xl font-black text-gray-900 mb-6 text-center">Gibraltar Breakdown</h3>
+            
+            <!-- Boys View -->
+            <div id="gibraltar-boys" class="space-y-4">
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">Sub Junior</span> <span class="font-bold text-gray-900">{{lookup scores.Gibraltar.boys "Sub Junior"}}</span></div>
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">Junior</span> <span class="font-bold text-gray-900">{{scores.Gibraltar.boys.Junior}}</span></div>
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">Senior</span> <span class="font-bold text-gray-900">{{scores.Gibraltar.boys.Senior}}</span></div>
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">General</span> <span class="font-bold text-gray-900">{{scores.Gibraltar.boys.General}}</span></div>
+                <div class="flex justify-between pt-2 border-t-2 border-gray-200"><span class="text-gray-900 font-black">Total Boys Points</span> <span class="font-black text-red-600 text-lg">{{scores.Gibraltar.boys.total}}</span></div>
+            </div>
+
+            <!-- Girls View (Hidden by default) -->
+            <div id="gibraltar-girls" class="space-y-4 hidden">
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">Sub Junior</span> <span class="font-bold text-gray-900">{{lookup scores.Gibraltar.girls "Sub Junior"}}</span></div>
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">Junior</span> <span class="font-bold text-gray-900">{{scores.Gibraltar.girls.Junior}}</span></div>
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">Senior</span> <span class="font-bold text-gray-900">{{scores.Gibraltar.girls.Senior}}</span></div>
+                <div class="flex justify-between border-b border-gray-100 pb-3"><span class="text-gray-600 font-medium">General</span> <span class="font-bold text-gray-900">{{scores.Gibraltar.girls.General}}</span></div>
+                <div class="flex justify-between pt-2 border-t-2 border-gray-200"><span class="text-gray-900 font-black">Total Girls Points</span> <span class="font-black text-red-600 text-lg">{{scores.Gibraltar.girls.total}}</span></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<script>
+    const launchBtn = document.getElementById('launch-btn');
+    const launchGate = document.getElementById('launch-gate');
+    const countdownOverlay = document.getElementById('countdown-overlay');
+    const countdownNumber = document.getElementById('countdown-number');
+    const standingsContent = document.getElementById('standings-content');
+    const globalNav = document.querySelector('nav');
+
+    const currentServerBoot = "{{serverBootId}}";
+    const lastLaunchedBoot = sessionStorage.getItem('festBootId');
+
+    if (lastLaunchedBoot !== currentServerBoot) {
+        sessionStorage.removeItem('festLaunched');
+    }
+
+    if (sessionStorage.getItem('festLaunched') === 'true') {
+        launchGate.style.display = 'none';
+        standingsContent.classList.remove('hidden');
+        if (globalNav) globalNav.style.display = '';
+    } else {
+        if (globalNav) globalNav.style.display = 'none';
+    }
+
+    launchBtn.addEventListener('click', () => {
+        launchGate.classList.add('hidden');
+        countdownOverlay.classList.remove('hidden');
+        
+        let count = 9;
+        countdownNumber.textContent = count;
+
+        const timer = setInterval(() => {
+            count--;
+            if (count > 0) {
+                countdownNumber.textContent = count;
+            } else {
+                clearInterval(timer);
+                countdownOverlay.classList.add('hidden');
+                standingsContent.classList.remove('hidden');
+                
+                if (globalNav) globalNav.style.display = '';
+
+                sessionStorage.setItem('festBootId', currentServerBoot);
+                sessionStorage.setItem('festLaunched', 'true');
+
+                triggerCrackers();
+            }
+        }, 1000);
+    });
+
+    function switchGender(gender) {
+        const btnBoys = document.getElementById('btn-boys');
+        const btnGirls = document.getElementById('btn-girls');
+        
+        const hermosBoys = document.getElementById('hermos-boys');
+        const hermosGirls = document.getElementById('hermos-girls');
+        const gibraltarBoys = document.getElementById('gibraltar-boys');
+        const gibraltarGirls = document.getElementById('gibraltar-girls');
+
+        if (gender === 'boys') {
+            btnBoys.className = "px-8 py-3 rounded-xl font-extrabold text-sm transition bg-white text-gray-900 shadow-sm";
+            btnGirls.className = "px-8 py-3 rounded-xl font-extrabold text-sm transition text-gray-600 hover:text-gray-900";
+            
+            hermosBoys.classList.remove('hidden');
+            hermosGirls.classList.add('hidden');
+            gibraltarBoys.classList.remove('hidden');
+            gibraltarGirls.classList.add('hidden');
+        } else {
+            btnGirls.className = "px-8 py-3 rounded-xl font-extrabold text-sm transition bg-white text-gray-900 shadow-sm";
+            btnBoys.className = "px-8 py-3 rounded-xl font-extrabold text-sm transition text-gray-600 hover:text-gray-900";
+            
+            hermosGirls.classList.remove('hidden');
+            hermosBoys.classList.add('hidden');
+            gibraltarGirls.classList.remove('hidden');
+            gibraltarBoys.classList.add('hidden');
+        }
+    }
+
+    function triggerCrackers() {
+        const duration = 3.5 * 1000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 35, spread: 360, ticks: 80, zIndex: 1000 };
+
+        function randomInRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        const interval = setInterval(function() {
+            const timeLeft = animationEnd - Date.now();
+            if (timeLeft <= 0) return clearInterval(interval);
+
+            const particleCount = 60 * (timeLeft / duration);
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+        }, 250);
+    }
+</script>

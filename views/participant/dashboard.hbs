@@ -1,0 +1,76 @@
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Header Section -->
+    <div class="bg-indigo-900 rounded-3xl p-8 mb-8 text-white shadow-lg flex flex-col md:flex-row justify-between items-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+        <div>
+            <h1 class="text-3xl font-extrabold mb-1">Welcome, {{user.name}}</h1>
+            <p class="text-indigo-200 text-lg">Filhal Fest 2026 Dashboard</p>
+        </div>
+        <div class="mt-6 md:mt-0 flex gap-4">
+            <div class="bg-white/10 backdrop-blur-md px-6 py-3 rounded-xl border border-white/20 text-center">
+                <div class="text-xs text-indigo-200 uppercase font-bold tracking-wider">Chess Number</div>
+                <div class="text-2xl font-black">{{user.chessNumber}}</div>
+            </div>
+            <div class="bg-white/10 backdrop-blur-md px-6 py-3 rounded-xl border border-white/20 text-center">
+                <div class="text-xs text-indigo-200 uppercase font-bold tracking-wider">Team</div>
+                <div class="text-2xl font-black">{{user.team}}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 class="text-sm font-bold text-gray-500 uppercase">Category</h3>
+            <p class="text-2xl font-black text-gray-900 mt-1">{{user.category}} {{user.gender}}</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 class="text-sm font-bold text-gray-500 uppercase">My Programs</h3>
+            <p class="text-3xl font-black text-indigo-600 mt-1">{{stats.programCount}}</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 class="text-sm font-bold text-gray-500 uppercase">Individual Score</h3>
+            <p class="text-3xl font-black text-green-600 mt-1">{{stats.totalScore}} <span class="text-sm text-gray-400">pts</span></p>
+        </div>
+    </div>
+
+    <!-- My Results Section -->
+    <h2 class="text-2xl font-extrabold text-gray-900 mb-6">My Results</h2>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        {{#if myResults.length}}
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200 text-sm text-gray-600 uppercase">
+                        <th class="p-4 font-bold">Program</th>
+                        <th class="p-4 font-bold">Classification</th>
+                        <th class="p-4 font-bold">Score</th>
+                        <th class="p-4 font-bold">Points Go To</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {{#each myResults}}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4 font-bold text-gray-900">{{this.program.name}}</td>
+                        <td class="p-4">
+                            <span class="text-sm text-gray-600">{{this.program.category}} • {{this.program.section}} • {{this.program.type}}</span>
+                        </td>
+                        <td class="p-4 font-black text-lg text-indigo-700">{{this.score}}</td>
+                        <td class="p-4">
+                            {{#if (eq this.program.category 'General')}}
+                                <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-bold">TEAM SCORE ONLY</span>
+                            {{else if (eq this.program.type 'Group')}}
+                                <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-bold">TEAM SCORE ONLY</span>
+                            {{else}}
+                                <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-bold">PERSONAL + TEAM</span>
+                            {{/if}}
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        {{else}}
+            <div class="p-10 text-center text-gray-500">
+                You have no published results yet.
+            </div>
+        {{/if}}
+    </div>
+</div>

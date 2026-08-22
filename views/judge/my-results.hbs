@@ -1,0 +1,68 @@
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-extrabold text-gray-900">My Submitted Results</h1>
+        <p class="text-gray-500 mt-1">Review and update scores you have submitted.</p>
+    </div>
+
+    {{#if success}}
+        <div class="bg-green-50 border border-green-200 p-4 mb-6 rounded-xl text-green-700 font-bold">{{success}}</div>
+    {{/if}}
+    {{#if error}}
+        <div class="bg-red-50 border border-red-200 p-4 mb-6 rounded-xl text-red-700 font-bold">{{error}}</div>
+    {{/if}}
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-x-auto">
+        {{#if results.length}}
+            <table class="w-full text-left border-collapse whitespace-nowrap">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider">
+                        <th class="p-4 font-bold">Program</th>
+                        <th class="p-4 font-bold">Participants</th>
+                        <th class="p-4 font-bold">Classification</th>
+                        <th class="p-4 font-bold">Team</th>
+                        <th class="p-4 font-bold">Score</th>
+                        <th class="p-4 font-bold">Status</th>
+                        <th class="p-4 font-bold text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {{#each results}}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4 font-bold text-gray-900">{{this.program.name}}</td>
+                        <td class="p-4">
+                            <div class="text-sm font-bold text-gray-800">{{pluckJoin this.participants 'name'}}</div>
+                            <div class="text-xs text-gray-500">Chess No: {{pluckJoin this.participants 'chessNumber'}}</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="flex gap-1 flex-wrap w-48">
+                                <span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded font-bold uppercase">{{this.program.category}}</span>
+                                {{#if this.program.gender}}<span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded font-bold uppercase">{{this.program.gender}}</span>{{/if}}
+                                <span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded font-bold uppercase">{{this.program.section}}</span>
+                                <span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded font-bold uppercase">{{this.program.type}}</span>
+                            </div>
+                        </td>
+                        <td class="p-4 font-bold {{#if (eq this.team 'Hermos')}}text-blue-600{{else}}text-red-600{{/if}}">{{this.team}}</td>
+                        <td class="p-4 font-black text-lg">{{this.score}}</td>
+                        <td class="p-4">
+                            {{#if (eq this.status 'published')}}
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-md font-bold">Published</span>
+                            {{else}}
+                                <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-md font-bold">Draft</span>
+                            {{/if}}
+                        </td>
+                        <td class="p-4 text-right">
+                            <a href="/judge/edit-result/{{this._id}}" class="text-sm bg-purple-50 text-purple-700 border border-purple-200 px-4 py-1.5 rounded-lg font-bold hover:bg-purple-100 transition">
+                                Edit Score
+                            </a>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        {{else}}
+            <div class="p-12 text-center text-gray-500">
+                <p class="text-lg font-medium">You haven't submitted any results yet.</p>
+            </div>
+        {{/if}}
+    </div>
+</div>

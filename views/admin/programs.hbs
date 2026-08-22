@@ -1,0 +1,62 @@
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900">Manage Programs</h1>
+            <p class="text-gray-500 mt-1">View and manage all festival events.</p>
+        </div>
+        <a href="/admin/add-program" class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-bold shadow-md hover:bg-indigo-700 transition">
+            + Add Program
+        </a>
+    </div>
+
+    {{#if success}}
+        <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-8">
+            <p class="text-green-700 font-bold">{{success}}</p>
+        </div>
+    {{/if}}
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-x-auto">
+        {{#if programs.length}}
+            <table class="w-full text-left border-collapse whitespace-nowrap">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider">
+                        <th class="p-4 font-bold">Program Name</th>
+                        <th class="p-4 font-bold">Category</th>
+                        <th class="p-4 font-bold">Gender</th>
+                        <th class="p-4 font-bold">Section</th>
+                        <th class="p-4 font-bold">Type</th>
+                        <th class="p-4 font-bold text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {{#each programs}}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4 font-bold text-gray-900">{{this.name}}</td>
+                        <td class="p-4"><span class="bg-indigo-50 text-indigo-700 text-xs px-2 py-1 rounded font-bold uppercase">{{this.category}}</span></td>
+                        <td class="p-4 text-sm text-gray-700">{{#if this.gender}}{{this.gender}}{{else}}—{{/if}}</td>
+                        <td class="p-4 text-sm text-gray-700">{{#if this.section}}{{this.section}}{{else}}—{{/if}}</td>
+                        <td class="p-4 text-sm text-gray-700">{{#if this.type}}{{this.type}}{{else}}—{{/if}}</td>
+                        <td class="p-4 text-right flex justify-end gap-2">
+    <!-- Edit Button -->
+    <a href="/admin/edit-program/{{this._id}}" class="text-sm px-3 py-1 rounded border bg-white border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition">
+        Edit
+    </a>
+                        <td class="p-4 text-right flex justify-end gap-2">
+                            <!-- Delete Button (with JS confirmation) -->
+                            <form action="/admin/delete-program/{{this._id}}" method="POST" class="inline" onsubmit="return confirm('Delete this program? This will NOT delete associated results automatically.');">
+                                <button type="submit" class="text-sm bg-red-50 text-red-600 border border-red-100 px-3 py-1 rounded font-medium hover:bg-red-100 transition">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        {{else}}
+            <div class="p-12 text-center text-gray-500">
+                <p class="text-lg font-medium">No programs found.</p>
+            </div>
+        {{/if}}
+    </div>
+</div>

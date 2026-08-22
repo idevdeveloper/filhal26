@@ -1,0 +1,58 @@
+:root {
+    --logo-black: #1a1a1a;
+    --logo-red: #da291c;     /* The iconic red from your play button & typography */
+    --logo-gold: #f4d06f;    /* The soft gold/yellow from your emblem */
+    --logo-teal: #00a896;    /* The diamond teal/cyan accent */
+}
+
+/* Override Bootstrap Primary and Theme Colors */
+body {
+    background-color: #f8f9fa;
+    color: var(--logo-black);
+}
+
+/* Primary buttons and headers take the Logo Red */
+.btn-primary, .bg-primary {
+    background-color: var(--logo-red) !important;
+    border-color: var(--logo-red) !important;
+}
+
+.btn-primary:hover {
+    background-color: #b52217 !important;
+    border-color: #b52217 !important;
+}
+
+/* Text accents */
+.text-primary {
+    color: var(--logo-red) !important;
+}
+
+/* Headers and Titles */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--logo-black);
+    font-weight: 700;
+}
+
+/* Custom badges or team highlights using your Teal and Gold accents */
+.badge-gold {
+    background-color: var(--logo-gold);
+    color: #1a1a1a;
+}
+
+.badge-teal {
+    background-color: var(--logo-teal);
+    color: #ffffff;
+}
+
+/* Example: Updating your Team Standings scoreboard card */
+.team-standings-card {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+    color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.team-standings-card h3, 
+.team-standings-card .text-secondary {
+    color: #f8f9fa !important;
+}

@@ -1,0 +1,60 @@
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-2xl shadow border border-gray-200 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Edit Program</h1>
+            <a href="/admin/programs" class="text-sm text-indigo-600 font-medium hover:underline">&larr; Back to Programs</a>
+        </div>
+        
+        {{#if error}}
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                <p class="text-red-700 font-medium">{{error}}</p>
+            </div>
+        {{/if}}
+
+        <form action="/admin/edit-program/{{editProgram._id}}" method="POST" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Program Name</label>
+                <input type="text" name="name" value="{{editProgram.name}}" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Category</label>
+                    <select name="category" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border">
+                        <option value="Sub Junior" {{#if (eq editProgram.category "Sub Junior")}}selected{{/if}}>Sub Junior</option>
+                        <option value="Junior" {{#if (eq editProgram.category "Junior")}}selected{{/if}}>Junior</option>
+                        <option value="Senior" {{#if (eq editProgram.category "Senior")}}selected{{/if}}>Senior</option>
+                        <option value="General" {{#if (eq editProgram.category "General")}}selected{{/if}}>General</option>
+                        <option value="Team" {{#if (eq editProgram.category "Team")}}selected{{/if}}>Team</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Gender</label>
+                    <select name="gender" class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border">
+                        <option value="Boys" {{#if (eq editProgram.gender "Boys")}}selected{{/if}}>Boys</option>
+                        <option value="Girls" {{#if (eq editProgram.gender "Girls")}}selected{{/if}}>Girls</option>
+                    </select>
+                    <p class="text-xs text-gray-400 mt-1">Leave as is if Team category</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Section</label>
+                    <select name="section" class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border">
+                        <option value="Main Stage" {{#if (eq editProgram.section "Main Stage")}}selected{{/if}}>Main Stage</option>
+                        <option value="Off Stage" {{#if (eq editProgram.section "Off Stage")}}selected{{/if}}>Off Stage</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Program Type</label>
+                    <select name="type" class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border">
+                        <option value="Individual" {{#if (eq editProgram.type "Individual")}}selected{{/if}}>Individual</option>
+                        <option value="Group" {{#if (eq editProgram.type "Group")}}selected{{/if}}>Group</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-xl font-bold hover:bg-indigo-700 shadow-md transition">
+                Save Changes
+            </button>
+        </form>
+    </div>
+</div>

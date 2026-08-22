@@ -1,0 +1,71 @@
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900">Admin Dashboard</h1>
+            <p class="text-gray-500 mt-1">Manage Filhal Fest 2026</p>
+        </div>
+        <a href="/admin/add-result" class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-bold shadow-md hover:bg-indigo-700 transition">
+            + Add Result
+        </a>
+    </div>
+
+    {{#if success}}
+        <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-8 rounded-r-lg">
+            <p class="text-green-700 font-bold">{{success}}</p>
+        </div>
+    {{/if}}
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Participants</h3>
+                <p class="text-4xl font-black text-indigo-900 mt-2">{{stats.totalParticipants}}</p>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Judges</h3>
+                <p class="text-4xl font-black text-indigo-900 mt-2">{{stats.totalJudges}}</p>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider">Total Programs</h3>
+                <p class="text-4xl font-black text-indigo-900 mt-2">{{stats.totalPrograms}}</p>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider">Results Uploaded</h3>
+                <p class="text-4xl font-black text-indigo-900 mt-2">{{stats.totalResults}}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <h2 class="text-xl font-extrabold text-gray-900 mb-4">Quick Actions</h2>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        
+        <a href="/admin/add-result" class="px-6 py-4 bg-indigo-50 text-indigo-700 font-bold rounded-xl border border-indigo-100 hover:bg-indigo-100 transition text-center flex items-center justify-center">
+            + Add Result
+        </a>
+        
+        <a href="/admin/results" class="px-6 py-4 bg-indigo-50 text-indigo-700 font-bold rounded-xl border border-indigo-100 hover:bg-indigo-100 transition text-center flex items-center justify-center">
+            Manage Results
+        </a>
+        
+        <a href="/admin/users" class="px-6 py-4 bg-indigo-50 text-indigo-700 font-bold rounded-xl border border-indigo-100 hover:bg-indigo-100 transition text-center flex items-center justify-center">
+            Manage Participants
+        </a>
+
+        <a href="/admin/judges" class="px-6 py-4 bg-purple-50 text-purple-700 font-bold rounded-xl border border-purple-100 hover:bg-purple-100 transition text-center flex items-center justify-center">
+            Manage Judges
+        </a>
+        
+        <a href="/admin/programs" class="px-6 py-4 bg-indigo-50 text-indigo-700 font-bold rounded-xl border border-indigo-100 hover:bg-indigo-100 transition text-center flex items-center justify-center">
+            Manage Programs
+        </a>
+        
+    </div>
+</div>

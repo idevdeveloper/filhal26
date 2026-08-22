@@ -1,0 +1,55 @@
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-2xl shadow border border-gray-200 p-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Add New Participant</h1>
+        
+        {{#if error}}
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                <p class="text-red-700 font-medium">{{error}}</p>
+            </div>
+        {{/if}}
+
+        <form action="/admin/add-user" method="POST" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                    <input type="text" name="name" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Chess Number (Unique)</label>
+                    <input type="text" name="chessNumber" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Category</label>
+                    <select name="category" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border">
+                        <option value="Sub Junior">Sub Junior</option>
+                        <option value="Junior">Junior</option>
+                        <option value="Senior">Senior</option>
+                        <!-- General and Team are intentionally left out as per Rule 4 -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Gender</label>
+                    <select name="gender" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border">
+                        <option value="Boys">Boys</option>
+                        <option value="Girls">Girls</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Team</label>
+                    <select name="team" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border">
+                        <option value="Hermos">Hermos</option>
+                        <option value="Gibraltar">Gibraltar</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Temporary Password</label>
+                    <input type="text" name="password" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border" value="filhal2026">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-xl font-bold hover:bg-indigo-700 shadow-md transition">
+                Create Participant
+            </button>
+        </form>
+    </div>
+</div>
