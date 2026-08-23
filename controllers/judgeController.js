@@ -66,10 +66,10 @@ exports.submitResult = async (req, res) => {
         }
 
         // A program gets higher points (20/15/10) if its Category is 'Team', Section is 'General', or Type is 'Group'
-        const isHigherPoints = (programDoc.category === 'Team' || programDoc.section === 'General' || programDoc.type === 'Group');
+        const isHigherPoints = (programDoc.category === 'General' || programDoc.category === 'Team');
 const p1Points = isHigherPoints ? 20 : 10;
-const p2Points = isHigherPoints ? 15 : 5;
-const p3Points = isHigherPoints ? 10 : 3;
+const p2Points = isHigherPoints ? 15 : 7;
+const p3Points = isHigherPoints ? 10 : 5;
 
         const savePlacement = async (chestStr, scorePoints, positionNum) => {
             if (!chestStr || !chestStr.trim()) return;

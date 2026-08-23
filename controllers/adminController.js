@@ -238,7 +238,7 @@ router.post('/add-program', isAdmin, async (req, res) => {
             type: category === 'Team' ? undefined : type
         });
         res.redirect('/admin/programs?success=Program added successfully');
-    } catch (error) {
+    } catch(error) {
         res.render('admin/add-program', { layout: 'main', user: req.session.user, error: error.message });
     }
 });
