@@ -5,10 +5,15 @@ const userSchema = new mongoose.Schema({
     role: { type: String, enum: ['ADMIN', 'JUDGE', 'PARTICIPANT'], required: true },
     name: { type: String, required: true },
     chessNumber: { type: String, unique: true, sparse: true },
-    category: { type: String, enum: ['Sub Junior', 'Junior', 'Senior'] }, // No General/Team
+    category: { type: String, enum: ['Sub Junior', 'Junior', 'Senior', 'General', 'Team'] }, 
     gender: { type: String, enum: ['Boys', 'Girls'] },
     team: { type: String, enum: ['Hermos', 'Gibraltar'] },
-    password: { type: String, required: true }
+    password: { type: String, required: true },
+    // Placed INSIDE the schema object definition so populate() works properly
+    programs: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Program'
+    }]
 }, { timestamps: true });
 
 userSchema.pre('save', async function() {

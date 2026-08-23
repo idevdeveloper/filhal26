@@ -34,54 +34,63 @@ exports.postLogin = async (req, res) => {
 exports.getDashboard = async (req, res) => {
     if (!req.session.judge) return res.redirect('/judge/login');
     try {
-        res.render('judge/dashboard', { layout: 'main', judge: req.session.judge, success: req.query.success, error: req.query.error });
+        const programs = await Program.find({}).sort({ name: 1 }).lean();
+        res.render('judge/dashboard', { 
+            layout: 'main', 
+            judge: req.session.judge, 
+            programs, 
+            success: req.query.success, 
+            error: req.query.error 
+        });
     } catch (err) {
         res.status(500).send('Error loading dashboard: ' + err.message);
+    }
+};
+
+// API endpoint to fetch participants enrolled in a specific program for dropdowns
+exports.getProgramParticipants = async (req, res) => {
+    if (!req.session.judge) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+        const participants = await User.find({ 
+            role: 'PARTICIPANT', 
+            programs: req.params.programId 
+        }).lean();
+        res.json(participants);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
 exports.submitResult = async (req, res) => {
     if (!req.session.judge) return res.status(401).send('Unauthorized');
     try {
-        const { programName, category, gender, section, type, firstPlace, secondPlace, thirdPlace } = req.body;
+        const { programId, firstPlace, secondPlace, thirdPlace } = req.body;
         
-        if (!programName || (!firstPlace && !secondPlace && !thirdPlace)) {
-            throw new Error("Please specify the program name and at least one placement.");
+        if (!programId || (!firstPlace && !secondPlace && !thirdPlace)) {
+            throw new Error("Please select a program and at least one placement.");
         }
 
-        const query = {
-            name: { $regex: new RegExp(`^${programName.trim()}$`, 'i') },
-            category,
-            section
-        };
-        
-        if (category !== 'Team') {
-            query.gender = gender;
-            query.type = type;
-        }
-
-        const programDoc = await Program.findOne(query);
+        const programDoc = await Program.findById(programId);
         if (!programDoc) {
-            throw new Error(`The program "${programName}" does not exist for the selected combination.`);
+            throw new Error(`The selected program does not exist.`);
         }
 
-        // A program gets higher points (20/15/10) if its Category is 'Team', Section is 'General', or Type is 'Group'
+        // A program gets higher points (20/15/10) if its Category is 'Team' or 'General'
         const isHigherPoints = (programDoc.category === 'General' || programDoc.category === 'Team');
-const p1Points = isHigherPoints ? 20 : 10;
-const p2Points = isHigherPoints ? 15 : 7;
-const p3Points = isHigherPoints ? 10 : 5;
+        const p1Points = isHigherPoints ? 20 : 10;
+        const p2Points = isHigherPoints ? 15 : 7;
+        const p3Points = isHigherPoints ? 10 : 5;
 
-        const savePlacement = async (chestStr, scorePoints, positionNum) => {
-            if (!chestStr || !chestStr.trim()) return;
-            const chessArray = chestStr.split(',').map(c => c.trim()).filter(c => c);
-            if (chessArray.length === 0) return;
-
-            const { users, team } = await validateResultEntry(programDoc._id, chessArray);
+        const savePlacement = async (participantId, scorePoints, positionNum) => {
+            if (!participantId || !participantId.trim()) return;
+            
+            const userDoc = await User.findOne({ _id: participantId, role: 'PARTICIPANT' });
+            if (!userDoc) throw new Error(`Selected participant not found.`);
 
             await Result.create({
                 program: programDoc._id,
-                participants: users.map(u => u._id),
-                team: team,
+                participants: [userDoc._id],
+                team: userDoc.team,
                 score: scorePoints,
                 position: positionNum,
                 status: 'draft', 
@@ -90,8 +99,8 @@ const p3Points = isHigherPoints ? 10 : 5;
         };
 
         await savePlacement(firstPlace, p1Points, 1);
-await savePlacement(secondPlace, p2Points, 2);
-await savePlacement(thirdPlace, p3Points, 3);
+        await savePlacement(secondPlace, p2Points, 2);
+        await savePlacement(thirdPlace, p3Points, 3);
 
         res.redirect('/judge/dashboard?success=Results submitted successfully for admin review!');
     } catch (error) {

@@ -23,47 +23,48 @@ router.get('/dashboard', isAdmin, async (req, res) => {
     });
 });
 
-router.get('/add-result', isAdmin, (req, res) => {
-    res.render('admin/add-result', { layout: 'main', user: req.session.user });
+router.get('/add-result', isAdmin, async (req, res) => {
+    const programs = await Program.find({}).sort({ name: 1 }).lean();
+    res.render('admin/add-result', { layout: 'main', user: req.session.user, programs });
+});
+
+// API endpoint or helper route to fetch participants enrolled in a specific program for dropdowns
+router.get('/api/program-participants/:programId', isAdmin, async (req, res) => {
+    try {
+        const participants = await User.find({ 
+            role: 'PARTICIPANT', 
+            programs: req.params.programId 
+        }).lean();
+        res.json(participants);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 router.post('/add-result', isAdmin, async (req, res) => {
     try {
-        const { programName, category, gender, section, type, firstPlace, secondPlace, thirdPlace } = req.body;
+        const { programId, firstPlace, secondPlace, thirdPlace } = req.body;
         
-        const query = {
-            name: { $regex: new RegExp(`^${programName.trim()}$`, 'i') },
-            category,
-            section
-        };
-        
-        if (category !== 'Team') {
-            query.gender = gender;
-            query.type = type;
-        }
-
-        const programDoc = await Program.findOne(query);
+        const programDoc = await Program.findById(programId);
         if (!programDoc) {
-            throw new Error(`The program "${programName}" does not exist for this combination.`);
+            throw new Error(`Selected program does not exist.`);
         }
 
-        // Dynamic points rule: 20/15/10 for Team, General, or Group; else 10/5/3
+        // Dynamic points rule: 20/15/10 for Team, General, or Group; else 10/7/5
         const isHigherPoints = (programDoc.category === 'Team' || programDoc.section === 'General' || programDoc.type === 'Group');
-const p1Points = isHigherPoints ? 20 : 10;
-const p2Points = isHigherPoints ? 15 : 5;
-const p3Points = isHigherPoints ? 10 : 3;
+        const p1Points = isHigherPoints ? 20 : 10;
+        const p2Points = isHigherPoints ? 15 : 7;
+        const p3Points = isHigherPoints ? 10 : 5;
 
-        const savePlacement = async (chestStr, scorePoints, positionNum) => {
-            if (!chestStr || !chestStr.trim()) return;
-            const chessArray = chestStr.split(',').map(c => c.trim()).filter(c => c);
-            if (chessArray.length === 0) return;
-
-            const { users, team } = await validateResultEntry(programDoc._id, chessArray);
+        const savePlacement = async (chessNumber, scorePoints, positionNum) => {
+            if (!chessNumber || !chessNumber.trim()) return;
+            const userDoc = await User.findOne({ chessNumber: chessNumber.trim(), role: 'PARTICIPANT' });
+            if (!userDoc) throw new Error(`Participant with Chest No. ${chessNumber} not found.`);
 
             await Result.create({
                 program: programDoc._id,
-                participants: users.map(u => u._id), // Save array of users
-                team: team,
+                participants: [userDoc._id],
+                team: userDoc.team,
                 score: scorePoints,
                 position: positionNum,
                 status: 'published'
@@ -71,12 +72,13 @@ const p3Points = isHigherPoints ? 10 : 3;
         };
 
         await savePlacement(firstPlace, p1Points, 1);
-await savePlacement(secondPlace, p2Points, 2);
-await savePlacement(thirdPlace, p3Points, 3);
+        await savePlacement(secondPlace, p2Points, 2);
+        await savePlacement(thirdPlace, p3Points, 3);
 
         res.redirect('/admin/dashboard?success=Results Added Successfully');
     } catch (error) {
-        res.render('admin/add-result', { layout: 'main', error: error.message });
+        const programs = await Program.find({}).sort({ name: 1 }).lean();
+        res.render('admin/add-result', { layout: 'main', user: req.session.user, programs, error: error.message });
     }
 });
 
@@ -128,24 +130,35 @@ router.post('/delete-result/:id', isAdmin, async (req, res) => {
 });
 
 router.get('/users', isAdmin, async (req, res) => {
-    const users = await User.find({ role: 'PARTICIPANT' }).sort({ createdAt: -1 }).lean(); 
+    const users = await User.find({ role: 'PARTICIPANT' }).populate('programs').sort({ createdAt: -1 }).lean(); 
     res.render('admin/users', { layout: 'main', user: req.session.user, users, success: req.query.success });
 });
 
-router.get('/add-user', isAdmin, (req, res) => {
-    res.render('admin/add-user', { layout: 'main', user: req.session.user });
+router.get('/add-user', isAdmin, async (req, res) => {
+    const programs = await Program.find({}).sort({ name: 1 }).lean();
+    res.render('admin/add-user', { layout: 'main', user: req.session.user, programs });
 });
 
 router.post('/add-user', isAdmin, async (req, res) => {
     try {
-        const { name, chessNumber, category, gender, team, password } = req.body;
+        const { name, chessNumber, category, gender, team, password, programs } = req.body;
         const existingUser = await User.findOne({ chessNumber });
         if (existingUser) throw new Error("A participant with this Chess Number already exists.");
 
-        await User.create({ role: 'PARTICIPANT', name, chessNumber, category, gender, team, password });
+        await User.create({ 
+            role: 'PARTICIPANT', 
+            name, 
+            chessNumber, 
+            category, 
+            gender, 
+            team, 
+            password,
+            programs: Array.isArray(programs) ? programs : (programs ? [programs] : [])
+        });
         res.redirect('/admin/users?success=Participant added successfully');
     } catch (error) {
-        res.render('admin/add-user', { layout: 'main', user: req.session.user, error: error.message });
+        const programs = await Program.find({}).sort({ name: 1 }).lean();
+        res.render('admin/add-user', { layout: 'main', user: req.session.user, programs, error: error.message });
     }
 });
 
@@ -153,7 +166,8 @@ router.get('/edit-user/:id', isAdmin, async (req, res) => {
     try {
         const editUser = await User.findById(req.params.id).lean();
         if (!editUser) throw new Error("Participant not found.");
-        res.render('admin/edit-user', { layout: 'main', user: req.session.user, editUser });
+        const programs = await Program.find({}).sort({ name: 1 }).lean();
+        res.render('admin/edit-user', { layout: 'main', user: req.session.user, editUser, programs });
     } catch (error) {
         res.redirect('/admin/users?error=Participant not found');
     }
@@ -161,7 +175,7 @@ router.get('/edit-user/:id', isAdmin, async (req, res) => {
 
 router.post('/edit-user/:id', isAdmin, async (req, res) => {
     try {
-        const { name, chessNumber, category, gender, team, password } = req.body;
+        const { name, chessNumber, category, gender, team, password, programs } = req.body;
         const existingUser = await User.findOne({ chessNumber, _id: { $ne: req.params.id } });
         if (existingUser) throw new Error("This Chess Number is already in use.");
 
@@ -171,13 +185,15 @@ router.post('/edit-user/:id', isAdmin, async (req, res) => {
         userToUpdate.category = category;
         userToUpdate.gender = gender;
         userToUpdate.team = team;
+        userToUpdate.programs = Array.isArray(programs) ? programs : (programs ? [programs] : []);
         if (password && password.trim() !== '') userToUpdate.password = password;
 
         await userToUpdate.save();
         res.redirect('/admin/users?success=Participant updated successfully');
     } catch (error) {
         const editUser = await User.findById(req.params.id).lean();
-        res.render('admin/edit-user', { layout: 'main', user: req.session.user, editUser, error: error.message });
+        const programs = await Program.find({}).sort({ name: 1 }).lean();
+        res.render('admin/edit-user', { layout: 'main', user: req.session.user, editUser, programs, error: error.message });
     }
 });
 

@@ -71,6 +71,8 @@ app.get('/create-admin', async (req, res) => {
     }
 });
 
+
+
 // 7. CONTROLLER ROUTES (Registered AFTER body parser middleware)
 const judgeController = require('./controllers/judgeController');
 

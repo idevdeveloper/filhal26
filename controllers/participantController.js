@@ -7,33 +7,45 @@ const User = require('../models/User');
 const isParticipant = (req, res, next) => req.session.participant ? next() : res.redirect('/login');
 
 router.get('/dashboard', isParticipant, async (req, res) => {
-    const participant = req.session.participant;
-    
-    const myResults = await Result.find({ participants: participant._id, status: 'published' })
-        .populate('program')
-        .sort({ createdAt: -1 })
-        .lean(); 
+    try {
+        // Fetch fresh participant data and populate assigned programs
+        const participant = await User.findById(req.session.participant._id)
+            .populate('programs')
+            .lean();
 
-    let totalScore = 0;
-    let programCount = myResults.length;
-
-    myResults.forEach(r => {
-        // ONLY add to personal total score if it is strictly an Individual program type
-        if (r.program && r.program.type === 'Individual' && r.program.category !== 'General') {
-            totalScore += r.score;
+        if (!participant) {
+            return res.redirect('/login');
         }
-    });
 
-    res.render('participant/dashboard', { 
-        layout: 'main', 
-        user: participant,
-        myResults,
-        stats: { totalScore, programCount }
-    });
+        const myResults = await Result.find({ participants: participant._id, status: 'published' })
+            .populate('program')
+            .sort({ createdAt: -1 })
+            .lean(); 
+
+        let totalScore = 0;
+        myResults.forEach(r => {
+            // ONLY add to personal total score if it is strictly an Individual program type
+            if (r.program && r.program.type === 'Individual' && r.program.category !== 'General') {
+                totalScore += r.score;
+            }
+        });
+
+        const programCount = participant.programs ? participant.programs.length : 0;
+
+        res.render('participant/dashboard', { 
+            layout: 'main', 
+            user: participant,
+            myResults,
+            stats: { totalScore, programCount }
+        });
+    } catch (err) {
+        console.error("Error loading participant dashboard:", err);
+        res.status(500).send("Error loading dashboard");
+    }
 });
 
 router.get('/change-password', isParticipant, (req, res) => {
-    res.render('participant/change-password', { layout: 'main', user: req.session.user });
+    res.render('participant/change-password', { layout: 'main', user: req.session.participant });
 });
 
 router.post('/change-password', isParticipant, async (req, res) => {

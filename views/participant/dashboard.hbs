@@ -33,6 +33,32 @@
         </div>
     </div>
 
+    <!-- My Registered Programs Section -->
+    <div class="mb-10">
+        <h2 class="text-2xl font-extrabold text-gray-900 mb-6">My Registered Programs</h2>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            {{#if user.programs.length}}
+                <div class="divide-y divide-gray-100">
+                    {{#each user.programs}}
+                    <div class="p-6 hover:bg-gray-50 transition flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h3 class="font-extrabold text-lg text-gray-900">{{this.name}}</h3>
+                            <p class="text-xs font-semibold text-gray-500 mt-1 uppercase tracking-wider">
+                                {{this.category}} • {{this.section}} {{#if this.gender}}• {{this.gender}}{{/if}} {{#if this.type}}• {{this.type}}{{/if}}
+                            </p>
+                        </div>
+                        <span class="bg-indigo-50 text-indigo-700 text-xs px-3 py-1.5 rounded-lg font-bold">Registered</span>
+                    </div>
+                    {{/each}}
+                </div>
+            {{else}}
+                <div class="p-10 text-center text-gray-500">
+                    You are not currently registered for any programs. Contact your admin if this is a mistake.
+                </div>
+            {{/if}}
+        </div>
+    </div>
+
     <!-- My Results Section -->
     <h2 class="text-2xl font-extrabold text-gray-900 mb-6">My Results</h2>
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
