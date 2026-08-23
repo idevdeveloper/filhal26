@@ -1,6 +1,7 @@
 
 
 
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Main Scoreboard -->
     <div class="champ-gradient rounded-3xl p-1 shadow-2xl mb-12">
         <div class="bg-white/10 backdrop-blur-xl rounded-[23px] p-8 md:p-12 flex flex-col md:flex-row justify-around items-center text-white text-center gap-8">
@@ -91,57 +92,7 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
 <script>
-    const launchBtn = document.getElementById('launch-btn');
-    const launchGate = document.getElementById('launch-gate');
-    const countdownOverlay = document.getElementById('countdown-overlay');
-    const countdownNumber = document.getElementById('countdown-number');
-    const standingsContent = document.getElementById('standings-content');
-    const globalNav = document.querySelector('nav');
-
-    const currentServerBoot = "{{serverBootId}}";
-    const lastLaunchedBoot = sessionStorage.getItem('festBootId');
-
-    if (lastLaunchedBoot !== currentServerBoot) {
-        sessionStorage.removeItem('festLaunched');
-    }
-
-    if (sessionStorage.getItem('festLaunched') === 'true') {
-        launchGate.style.display = 'none';
-        standingsContent.classList.remove('hidden');
-        if (globalNav) globalNav.style.display = '';
-    } else {
-        if (globalNav) globalNav.style.display = 'none';
-    }
-
-    launchBtn.addEventListener('click', () => {
-        launchGate.classList.add('hidden');
-        countdownOverlay.classList.remove('hidden');
-        
-        let count = 9;
-        countdownNumber.textContent = count;
-
-        const timer = setInterval(() => {
-            count--;
-            if (count > 0) {
-                countdownNumber.textContent = count;
-            } else {
-                clearInterval(timer);
-                countdownOverlay.classList.add('hidden');
-                standingsContent.classList.remove('hidden');
-                
-                if (globalNav) globalNav.style.display = '';
-
-                sessionStorage.setItem('festBootId', currentServerBoot);
-                sessionStorage.setItem('festLaunched', 'true');
-
-                triggerCrackers();
-            }
-        }, 1000);
-    });
-
     function switchGender(gender) {
         const btnBoys = document.getElementById('btn-boys');
         const btnGirls = document.getElementById('btn-girls');
@@ -168,24 +119,5 @@
             gibraltarGirls.classList.remove('hidden');
             gibraltarBoys.classList.add('hidden');
         }
-    }
-
-    function triggerCrackers() {
-        const duration = 3.5 * 1000;
-        const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 35, spread: 360, ticks: 80, zIndex: 1000 };
-
-        function randomInRange(min, max) {
-            return Math.random() * (max - min) + min;
-        }
-
-        const interval = setInterval(function() {
-            const timeLeft = animationEnd - Date.now();
-            if (timeLeft <= 0) return clearInterval(interval);
-
-            const particleCount = 60 * (timeLeft / duration);
-            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-        }, 250);
     }
 </script>
