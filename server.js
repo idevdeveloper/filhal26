@@ -44,6 +44,7 @@ app.engine('.hbs', engine({
     extname: '.hbs',
     helpers: {
         eq: (v1, v2) => v1 === v2,
+        lookup: (obj, field) => (obj && obj[field]) ? obj[field] : 0, // <--- Added lookup helper
         formatProgram: (prog) => `${prog.name} — ${prog.category} — ${prog.gender || 'N/A'} — ${prog.section || 'N/A'} — ${prog.type || 'N/A'}`,
         isWinner: (pos) => pos === 1,
         isPodium: (pos) => pos <= 3,
