@@ -23,7 +23,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Category</label>
-                    <select name="category" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border">
+                    <select name="category" id="categorySelect" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border" onchange="filterPrograms()">
                         <option value="Sub Junior" {{#if (eq editUser.category "Sub Junior")}}selected{{/if}}>Sub Junior</option>
                         <option value="Junior" {{#if (eq editUser.category "Junior")}}selected{{/if}}>Junior</option>
                         <option value="Senior" {{#if (eq editUser.category "Senior")}}selected{{/if}}>Senior</option>
@@ -33,7 +33,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Gender</label>
-                    <select name="gender" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border">
+                    <select name="gender" id="genderSelect" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm py-2 px-3 border" onchange="filterPrograms()">
                         <option value="Boys" {{#if (eq editUser.gender "Boys")}}selected{{/if}}>Boys</option>
                         <option value="Girls" {{#if (eq editUser.gender "Girls")}}selected{{/if}}>Girls</option>
                     </select>
@@ -54,12 +54,14 @@
             <!-- Program Assignment Checkboxes Section -->
             <div class="pt-4 border-t border-gray-200">
                 <label class="block text-sm font-bold text-gray-700 mb-2">Assigned Programs</label>
-                <div class="max-h-52 overflow-y-auto space-y-2 border border-gray-200 p-4 rounded-xl bg-gray-50">
+                <div class="max-h-52 overflow-y-auto space-y-2 border border-gray-200 p-4 rounded-xl bg-gray-50" id="programList">
                     {{#if programs.length}}
                         {{#each programs}}
-                            <label class="flex items-center space-x-3 p-2 hover:bg-white rounded-lg transition cursor-pointer">
+                            <label class="program-item flex items-center space-x-3 p-2 hover:bg-white rounded-lg transition cursor-pointer"
+                                   data-category="{{this.category}}"
+                                   data-gender="{{this.gender}}">
                                 <input type="checkbox" name="programs" value="{{this._id}}" 
-                                    {{#if (lookup ../editUser.programs this._id)}}checked{{/if}} 
+                                    {{#if (includes ../editUser.programs this._id)}}checked{{/if}} 
                                     class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                                 <span class="text-sm font-medium text-gray-800">
                                     {{this.name}} <span class="text-xs text-gray-500">({{this.category}} • {{this.section}} {{#if this.gender}}• {{this.gender}}{{/if}})</span>
@@ -78,3 +80,35 @@
         </form>
     </div>
 </div>
+
+<script>
+function filterPrograms() {
+    const selectedCategory = document.getElementById('categorySelect').value;
+    const selectedGender = document.getElementById('genderSelect').value;
+    const programItems = document.querySelectorAll('.program-item');
+
+    programItems.forEach(item => {
+        const progCategory = item.getAttribute('data-category');
+        const progGender = item.getAttribute('data-gender');
+
+        // Strictly exclude Team category programs
+        if (progCategory === 'Team') {
+            item.style.display = 'none';
+            return;
+        }
+
+        // Show if category matches participant's category OR is General, AND gender matches
+        const categoryMatch = (progCategory === selectedCategory || progCategory === 'General');
+        const genderMatch = (!progGender || progGender === selectedGender);
+
+        if (categoryMatch && genderMatch) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Run immediately on page load to apply initial filter and check states properly
+document.addEventListener('DOMContentLoaded', filterPrograms);
+</script>

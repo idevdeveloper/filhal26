@@ -52,34 +52,20 @@ exports.getProgramParticipants = async (req, res) => {
         const program = await Program.findById(req.params.programId).lean();
         if (!program) return res.status(404).json({ error: 'Program not found' });
 
+        if (program.category === 'Team') {
+            const teamOptions = [
+                { _id: 'Hermos', name: 'Hermos', team: 'Hermos', chessNumber: 'TEAM' },
+                { _id: 'Gibraltar', name: 'Gibraltar', team: 'Gibraltar', chessNumber: 'TEAM' }
+            ];
+            return res.json({ isGroup: false, isTeamCategory: true, options: teamOptions });
+        }
+
         const participants = await User.find({ 
             role: 'PARTICIPANT', 
             programs: req.params.programId 
         }).lean();
 
-        if (program.type === 'Group') {
-            const groupsByTeam = {};
-            participants.forEach(p => {
-                if (!groupsByTeam[p.team]) groupsByTeam[p.team] = [];
-                groupsByTeam[p.team].push(p);
-            });
-
-            const groupOptions = [];
-            Object.keys(groupsByTeam).forEach(teamName => {
-                const teamMembers = groupsByTeam[teamName];
-                if (teamMembers.length > 0) {
-                    groupOptions.push({
-                        isGroup: true,
-                        team: teamName,
-                        ids: teamMembers.map(m => m._id.toString()).join(','),
-                        displayString: `${teamName} Team Group (${teamMembers.length} members: ${teamMembers.map(m => m.name).join(', ')})`
-                    });
-                }
-            });
-            return res.json({ isGroup: true, options: groupOptions });
-        } else {
-            res.json({ isGroup: false, options: participants });
-        }
+        res.json({ isGroup: program.type === 'Group', isTeamCategory: false, options: participants });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -104,23 +90,30 @@ exports.submitResult = async (req, res) => {
         const p2Points = isHigherPoints ? 15 : 7;
         const p3Points = isHigherPoints ? 10 : 5;
 
-        const savePlacement = async (selectedVal, scorePoints, positionNum) => {
-            if (!selectedVal || !selectedVal.trim()) return;
+        const savePlacement = async (placementInput, scorePoints, positionNum) => {
+            if (!placementInput) return;
             
             let participantIds = [];
             let teamName = '';
 
-            if (programDoc.type === 'Group') {
-                participantIds = selectedVal.split(',').map(id => id.trim()).filter(id => id);
-                const firstUser = await User.findById(participantIds[0]);
-                if (!firstUser) throw new Error(`Invalid group participants selected.`);
-                teamName = firstUser.team;
-            } else {
-                const userDoc = await User.findOne({ _id: selectedVal, role: 'PARTICIPANT' });
+            if (programDoc.category === 'Team') {
+                teamName = placementInput.trim();
+                participantIds = [];
+            } else if (Array.isArray(placementInput)) {
+                participantIds = placementInput.map(id => id.trim()).filter(id => id);
+                if (participantIds.length > 0) {
+                    const firstUser = await User.findById(participantIds[0]);
+                    if (!firstUser) throw new Error(`Selected participant not found.`);
+                    teamName = firstUser.team;
+                }
+            } else if (typeof placementInput === 'string' && placementInput.trim() !== '') {
+                participantIds = [placementInput.trim()];
+                const userDoc = await User.findOne({ _id: participantIds[0], role: 'PARTICIPANT' });
                 if (!userDoc) throw new Error(`Selected participant not found.`);
-                participantIds = [userDoc._id];
                 teamName = userDoc.team;
             }
+
+            if (programDoc.category !== 'Team' && participantIds.length === 0) return;
 
             await Result.create({
                 program: programDoc._id,
@@ -128,6 +121,7 @@ exports.submitResult = async (req, res) => {
                 team: teamName,
                 score: scorePoints,
                 position: positionNum,
+                isTeamCategoryProgram: programDoc.category === 'Team',
                 status: 'draft', 
                 judgedBy: req.session.judge._id
             });

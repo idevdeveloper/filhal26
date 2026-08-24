@@ -2,7 +2,7 @@
     <div class="flex justify-between items-center mb-8">
         <div>
             <h1 class="text-3xl font-extrabold text-gray-900">Manage Results</h1>
-            <p class="text-gray-500 mt-1">Review, publish, and manage all festival results.</p>
+            <p class="text-gray-500 mt-1">Review, publish, and manage all festival results under one roof.</p>
         </div>
         <a href="/admin/add-result" class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-bold shadow-md hover:bg-indigo-700 transition">
             + Add New Result
@@ -47,53 +47,80 @@
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider">
                         <th class="p-4 font-bold">Program</th>
-                        <th class="p-4 font-bold">Participants</th>
+                        <th class="p-4 font-bold">Placements (1st, 2nd, 3rd)</th>
                         <th class="p-4 font-bold">Classification</th>
-                        <th class="p-4 font-bold">Team</th>
-                        <th class="p-4 font-bold">Score</th>
                         <th class="p-4 font-bold">Status</th>
                         <th class="p-4 font-bold text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {{#each results}}
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="p-4 font-bold text-gray-900">{{this.program.name}}</td>
+                    <tr class="hover:bg-gray-50 transition align-top">
+                        <!-- Program Name -->
                         <td class="p-4">
-                            <div class="text-sm font-bold text-gray-800">{{pluckJoin this.participants 'name'}}</div>
-                            <div class="text-xs text-gray-500">Chess No: {{pluckJoin this.participants 'chessNumber'}}</div>
+                            <div class="font-bold text-gray-900 text-base">{{this.program.name}}</div>
+                            <span class="text-xs text-gray-400 font-medium uppercase">{{this.program.type}}</span>
                         </td>
+
+                        <!-- Placements Stack (1st, 2nd, 3rd under one roof) -->
+                        <td class="p-4 space-y-3">
+                            {{#each this.placements}}
+                                <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex items-center justify-between gap-4">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase 
+                                                {{#if (eq this.position 1)}}bg-amber-100 text-amber-800{{else}}{{#if (eq this.position 2)}}bg-slate-200 text-slate-800{{else}}bg-orange-100 text-orange-800{{/if}}{{/if}}">
+                                                {{this.position}}{{#if (eq this.position 1)}}st{{else}}{{#if (eq this.position 2)}}nd{{else}}{{#if (eq this.position 3)}}rd{{else}}th{{/if}}{{/if}}{{/if}} Place
+                                            </span>
+                                            <span class="font-bold text-sm {{#if (eq this.team 'Hermos')}}text-blue-600{{else}}text-red-600{{/if}}">
+                                                [{{this.team}}]
+                                            </span>
+                                            <span class="text-xs font-black text-gray-900 bg-white px-2 py-0.5 rounded border border-gray-200">{{this.score}} pts</span>
+                                        </div>
+                                        <div class="text-xs font-bold text-gray-800 mt-1">
+                                            {{pluckJoin this.participants 'name'}} 
+                                            <span class="text-gray-400 font-normal">(Chess: {{pluckJoin this.participants 'chessNumber'}})</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {{/each}}
+                        </td>
+
+                        <!-- Classification Badges -->
                         <td class="p-4">
                             <div class="flex gap-1 flex-wrap w-48">
                                 <span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded font-bold uppercase">{{this.program.category}}</span>
                                 {{#if this.program.gender}}<span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded font-bold uppercase">{{this.program.gender}}</span>{{/if}}
                                 <span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded font-bold uppercase">{{this.program.section}}</span>
-                                <span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded font-bold uppercase">{{this.program.type}}</span>
                             </div>
                         </td>
-                        <td class="p-4 font-bold {{#if (eq this.team 'Hermos')}}text-blue-600{{else}}text-red-600{{/if}}">{{this.team}}</td>
-                        <td class="p-4 font-black text-lg">{{this.score}}</td>
+
+                        <!-- Status Badge -->
                         <td class="p-4">
                             {{#if (eq this.status 'published')}}
-                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-md font-bold">Published</span>
+                                <span class="bg-green-100 text-green-800 text-xs px-2.5 py-1 rounded-md font-bold">Published</span>
                             {{else}}
-                                <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-md font-bold">Draft</span>
+                                <span class="bg-yellow-100 text-yellow-800 text-xs px-2.5 py-1 rounded-md font-bold">Draft</span>
                             {{/if}}
                         </td>
-                        <td class="p-4 text-right flex justify-end gap-2">
-                            <!-- Toggle Publish / Hide -->
-                            <form action="/admin/publish-result/{{this._id}}" method="POST" class="inline">
-                                <button type="submit" class="text-sm px-3 py-1 rounded border font-medium {{#if (eq this.status 'published')}}bg-white border-gray-300 text-gray-700 hover:bg-gray-50{{else}}bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100{{/if}}">
-                                    {{#if (eq this.status 'published')}}Hide{{else}}Publish{{/if}}
-                                </button>
-                            </form>
-                            
-                            <!-- Delete Button -->
-                            <form action="/admin/delete-result/{{this._id}}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this result? Team scores will recalculate automatically.');">
-                                <button type="submit" class="text-sm bg-red-50 text-red-600 border border-red-100 px-3 py-1 rounded font-medium hover:bg-red-100 transition">
-                                    Delete
-                                </button>
-                            </form>
+
+                        <!-- Unified Actions for the Program Block -->
+                        <td class="p-4 text-right">
+                            <div class="flex justify-end gap-2 items-center">
+                                <!-- Toggle Publish / Hide for entire program -->
+                                <form action="/admin/publish-result/{{this._id}}" method="POST" class="inline">
+                                    <button type="submit" class="text-sm px-3 py-1.5 rounded border font-medium {{#if (eq this.status 'published')}}bg-white border-gray-300 text-gray-700 hover:bg-gray-50{{else}}bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100{{/if}}">
+                                        {{#if (eq this.status 'published')}}Hide{{else}}Publish{{/if}}
+                                    </button>
+                                </form>
+                                
+                                <!-- Delete all placements for this program -->
+                                <form action="/admin/delete-result/{{this._id}}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete all results for this program?');">
+                                    <button type="submit" class="text-sm bg-red-50 text-red-600 border border-red-100 px-3 py-1.5 rounded font-medium hover:bg-red-100 transition">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {{/each}}

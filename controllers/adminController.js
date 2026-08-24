@@ -33,37 +33,20 @@ router.get('/api/program-participants/:programId', isAdmin, async (req, res) => 
         const program = await Program.findById(req.params.programId).lean();
         if (!program) return res.status(404).json({ error: 'Program not found' });
 
+        if (program.category === 'Team') {
+            const teamOptions = [
+                { _id: 'Hermos', name: 'Hermos', team: 'Hermos', chessNumber: 'TEAM' },
+                { _id: 'Gibraltar', name: 'Gibraltar', team: 'Gibraltar', chessNumber: 'TEAM' }
+            ];
+            return res.json({ isGroup: false, isTeamCategory: true, options: teamOptions });
+        }
+
         const participants = await User.find({ 
             role: 'PARTICIPANT', 
             programs: req.params.programId 
         }).lean();
 
-        if (program.type === 'Group') {
-            // Group logic: Group participants by their team to form logical group choices
-            const groupsByTeam = {};
-            participants.forEach(p => {
-                if (!groupsByTeam[p.team]) groupsByTeam[p.team] = [];
-                groupsByTeam[p.team].push(p);
-            });
-
-            const groupOptions = [];
-            Object.keys(groupsByTeam).forEach(teamName => {
-                const teamMembers = groupsByTeam[teamName];
-                // Create chunks or teams as group options if they have multiple members
-                if (teamMembers.length > 0) {
-                    groupOptions.push({
-                        isGroup: true,
-                        team: teamName,
-                        // Combine participant IDs as a comma-separated string value for form submission
-                        ids: teamMembers.map(m => m._id.toString()).join(','),
-                        displayString: `${teamName} Team Group (${teamMembers.length} members: ${teamMembers.map(m => m.name).join(', ')})`
-                    });
-                }
-            });
-            return res.json({ isGroup: true, options: groupOptions });
-        } else {
-            res.json({ isGroup: false, options: participants });
-        }
+        res.json({ isGroup: program.type === 'Group', isTeamCategory: false, options: participants });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -83,24 +66,30 @@ router.post('/add-result', isAdmin, async (req, res) => {
         const p2Points = isHigherPoints ? 15 : 7;
         const p3Points = isHigherPoints ? 10 : 5;
 
-        const savePlacement = async (selectedVal, scorePoints, positionNum) => {
-            if (!selectedVal || !selectedVal.trim()) return;
+        const savePlacement = async (placementInput, scorePoints, positionNum) => {
+            if (!placementInput) return;
 
             let participantIds = [];
             let teamName = '';
 
-            if (programDoc.type === 'Group') {
-                // selectedVal contains comma-separated IDs from the group option
-                participantIds = selectedVal.split(',').map(id => id.trim()).filter(id => id);
-                const firstUser = await User.findById(participantIds[0]);
-                if (!firstUser) throw new Error(`Invalid group participants selected.`);
-                teamName = firstUser.team;
-            } else {
-                const userDoc = await User.findOne({ _id: selectedVal, role: 'PARTICIPANT' });
+            if (programDoc.category === 'Team') {
+                teamName = placementInput.trim();
+                participantIds = [];
+            } else if (Array.isArray(placementInput)) {
+                participantIds = placementInput.map(id => id.trim()).filter(id => id);
+                if (participantIds.length > 0) {
+                    const firstUser = await User.findById(participantIds[0]);
+                    if (!firstUser) throw new Error(`Selected participant not found.`);
+                    teamName = firstUser.team;
+                }
+            } else if (typeof placementInput === 'string' && placementInput.trim() !== '') {
+                participantIds = [placementInput.trim()];
+                const userDoc = await User.findOne({ _id: participantIds[0], role: 'PARTICIPANT' });
                 if (!userDoc) throw new Error(`Selected participant not found.`);
-                participantIds = [userDoc._id];
                 teamName = userDoc.team;
             }
+
+            if (programDoc.category !== 'Team' && participantIds.length === 0) return;
 
             await Result.create({
                 program: programDoc._id,
@@ -108,6 +97,7 @@ router.post('/add-result', isAdmin, async (req, res) => {
                 team: teamName,
                 score: scorePoints,
                 position: positionNum,
+                isTeamCategoryProgram: programDoc.category === 'Team',
                 status: 'published'
             });
         };
@@ -124,50 +114,92 @@ router.post('/add-result', isAdmin, async (req, res) => {
 });
 
 router.get('/results', isAdmin, async (req, res) => {
-    const { category, gender, section, type, team, status } = req.query;
-    
-    let progFilter = {};
-    if (category) progFilter.category = category;
-    if (gender) progFilter.gender = gender;
-    if (section) progFilter.section = section;
-    if (type) progFilter.type = type;
+    try {
+        const { category, gender, section, type, team, status } = req.query;
+        
+        let progFilter = {};
+        if (category) progFilter.category = category;
+        if (gender) progFilter.gender = gender;
+        if (section) progFilter.section = section;
+        if (type) progFilter.type = type;
 
-    const programs = await Program.find(progFilter);
-    const programIds = programs.map(p => p._id);
+        const programs = await Program.find(progFilter).lean();
+        const programIds = programs.map(p => p._id);
 
-    let resultFilter = { program: { $in: programIds } };
-    if (team) resultFilter.team = team;
-    if (status === 'published') resultFilter.status = 'published';
-    if (status === 'unpublished' || status === 'draft') resultFilter.status = 'draft';
+        let resultFilter = { program: { $in: programIds } };
+        if (team) resultFilter.team = team;
+        if (status === 'published') resultFilter.status = 'published';
+        if (status === 'unpublished' || status === 'draft') resultFilter.status = 'draft';
 
-    const results = await Result.find(resultFilter)
-        .populate('program')
-        .populate('participants')
-        .populate('judgedBy')
-        .sort({ createdAt: -1 })
-        .lean(); 
+        const rawResults = await Result.find(resultFilter)
+            .populate('program')
+            .populate('participants')
+            .populate('judgedBy')
+            .sort({ createdAt: -1 })
+            .lean(); 
 
-    res.render('admin/results', { 
-        layout: 'main', 
-        user: req.session.user,
-        results,
-        query: req.query,
-        success: req.query.success
-    });
+        const programMap = {};
+        rawResults.forEach(resItem => {
+            if (!resItem.program) return;
+            const progId = resItem.program._id.toString();
+
+            if (!programMap[progId]) {
+                programMap[progId] = {
+                    _id: resItem._id.toString(),
+                    program: resItem.program,
+                    placements: [],
+                    status: resItem.status
+                };
+            }
+
+            programMap[progId].placements.push({
+                position: resItem.position,
+                score: resItem.score,
+                team: resItem.team,
+                participants: resItem.participants
+            });
+        });
+
+        const groupedResults = Object.values(programMap).map(item => {
+            item.placements.sort((a, b) => a.position - b.position);
+            return item;
+        });
+
+        res.render('admin/results', { 
+            layout: 'main', 
+            user: req.session.user,
+            results: groupedResults,
+            query: req.query,
+            success: req.query.success
+        });
+    } catch (err) {
+        res.status(500).send('Error loading results: ' + err.message);
+    }
 });
 
 router.post('/publish-result/:id', isAdmin, async (req, res) => {
-    const result = await Result.findById(req.params.id);
-    if (result) {
-        result.status = result.status === 'published' ? 'draft' : 'published';
-        await result.save();
+    try {
+        const targetResult = await Result.findById(req.params.id);
+        if (targetResult) {
+            const newStatus = targetResult.status === 'published' ? 'draft' : 'published';
+            await Result.updateMany({ program: targetResult.program }, { status: newStatus });
+        }
+        res.redirect('/admin/results?success=Visibility Updated');
+    } catch (err) {
+        res.redirect('/admin/results?error=Failed to update visibility');
     }
-    res.redirect('/admin/results?success=Visibility Updated');
 });
 
 router.post('/delete-result/:id', isAdmin, async (req, res) => {
-    await Result.findByIdAndDelete(req.params.id);
-    res.redirect('/admin/results?success=Result Deleted Successfully');
+    try {
+        const targetResult = await Result.findById(req.params.id);
+        if (targetResult) {
+            await Result.deleteMany({ program: targetResult.program });
+        }
+        res.redirect('/admin/results?success=Program Results Deleted Successfully');
+    } catch (err) {
+        res.redirect('/admin/results?error=Failed to delete results');
+    }
 });
 
 router.get('/users', isAdmin, async (req, res) => {
@@ -208,7 +240,6 @@ router.get('/edit-user/:id', isAdmin, async (req, res) => {
         const editUserDoc = await User.findById(req.params.id).lean();
         if (!editUserDoc) throw new Error("Participant not found.");
         
-        // Map assigned program IDs to strings for easy lookup in Handlebars
         const editUser = {
             ...editUserDoc,
             programs: editUserDoc.programs ? editUserDoc.programs.map(p => p.toString()) : []
