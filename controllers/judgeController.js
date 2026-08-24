@@ -2,7 +2,6 @@ const Result = require('../models/Result');
 const Program = require('../models/Program');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
-const { validateResultEntry } = require('../services/validationService');
 
 exports.getLogin = (req, res) => {
     res.render('judge/login', { layout: 'main' });
@@ -47,15 +46,40 @@ exports.getDashboard = async (req, res) => {
     }
 };
 
-// API endpoint to fetch participants enrolled in a specific program for dropdowns
 exports.getProgramParticipants = async (req, res) => {
     if (!req.session.judge) return res.status(401).json({ error: 'Unauthorized' });
     try {
+        const program = await Program.findById(req.params.programId).lean();
+        if (!program) return res.status(404).json({ error: 'Program not found' });
+
         const participants = await User.find({ 
             role: 'PARTICIPANT', 
             programs: req.params.programId 
         }).lean();
-        res.json(participants);
+
+        if (program.type === 'Group') {
+            const groupsByTeam = {};
+            participants.forEach(p => {
+                if (!groupsByTeam[p.team]) groupsByTeam[p.team] = [];
+                groupsByTeam[p.team].push(p);
+            });
+
+            const groupOptions = [];
+            Object.keys(groupsByTeam).forEach(teamName => {
+                const teamMembers = groupsByTeam[teamName];
+                if (teamMembers.length > 0) {
+                    groupOptions.push({
+                        isGroup: true,
+                        team: teamName,
+                        ids: teamMembers.map(m => m._id.toString()).join(','),
+                        displayString: `${teamName} Team Group (${teamMembers.length} members: ${teamMembers.map(m => m.name).join(', ')})`
+                    });
+                }
+            });
+            return res.json({ isGroup: true, options: groupOptions });
+        } else {
+            res.json({ isGroup: false, options: participants });
+        }
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -75,22 +99,33 @@ exports.submitResult = async (req, res) => {
             throw new Error(`The selected program does not exist.`);
         }
 
-        // A program gets higher points (20/15/10) if its Category is 'Team' or 'General'
-        const isHigherPoints = (programDoc.category === 'General' || programDoc.category === 'Team');
+        const isHigherPoints = (programDoc.category === 'General' || programDoc.category === 'Team' || programDoc.type === 'Group');
         const p1Points = isHigherPoints ? 20 : 10;
         const p2Points = isHigherPoints ? 15 : 7;
         const p3Points = isHigherPoints ? 10 : 5;
 
-        const savePlacement = async (participantId, scorePoints, positionNum) => {
-            if (!participantId || !participantId.trim()) return;
+        const savePlacement = async (selectedVal, scorePoints, positionNum) => {
+            if (!selectedVal || !selectedVal.trim()) return;
             
-            const userDoc = await User.findOne({ _id: participantId, role: 'PARTICIPANT' });
-            if (!userDoc) throw new Error(`Selected participant not found.`);
+            let participantIds = [];
+            let teamName = '';
+
+            if (programDoc.type === 'Group') {
+                participantIds = selectedVal.split(',').map(id => id.trim()).filter(id => id);
+                const firstUser = await User.findById(participantIds[0]);
+                if (!firstUser) throw new Error(`Invalid group participants selected.`);
+                teamName = firstUser.team;
+            } else {
+                const userDoc = await User.findOne({ _id: selectedVal, role: 'PARTICIPANT' });
+                if (!userDoc) throw new Error(`Selected participant not found.`);
+                participantIds = [userDoc._id];
+                teamName = userDoc.team;
+            }
 
             await Result.create({
                 program: programDoc._id,
-                participants: [userDoc._id],
-                team: userDoc.team,
+                participants: participantIds,
+                team: teamName,
                 score: scorePoints,
                 position: positionNum,
                 status: 'draft', 

@@ -49,6 +49,11 @@ app.engine('.hbs', engine({
         isWinner: (pos) => pos === 1,
         isPodium: (pos) => pos <= 3,
         pluckJoin: (array, key) => array.map(item => item[key]).join(', '),
+        // <--- Added includes helper for edit-user pre-checked programs
+        includes: (array, value) => {
+            if (!array) return false;
+            return array.map(String).includes(String(value));
+        }
     }
 }));
 app.set('view engine', '.hbs');
@@ -71,14 +76,14 @@ app.get('/create-admin', async (req, res) => {
     }
 });
 
-
-
 // 7. CONTROLLER ROUTES (Registered AFTER body parser middleware)
 const judgeController = require('./controllers/judgeController');
 
 app.get('/judge/login', judgeController.getLogin);
 app.post('/judge/login', judgeController.postLogin);
 app.get('/judge/dashboard', judgeController.getDashboard);
+// <--- Added Judge API endpoint for fetching participants/groups dynamically
+app.get('/judge/api/program-participants/:programId', judgeController.getProgramParticipants);
 app.post('/judge/submit-result', judgeController.submitResult);
 app.get('/judge/logout', judgeController.logout);
 app.get('/judge/results', judgeController.getMyResults);

@@ -28,14 +28,42 @@ router.get('/add-result', isAdmin, async (req, res) => {
     res.render('admin/add-result', { layout: 'main', user: req.session.user, programs });
 });
 
-// API endpoint or helper route to fetch participants enrolled in a specific program for dropdowns
 router.get('/api/program-participants/:programId', isAdmin, async (req, res) => {
     try {
+        const program = await Program.findById(req.params.programId).lean();
+        if (!program) return res.status(404).json({ error: 'Program not found' });
+
         const participants = await User.find({ 
             role: 'PARTICIPANT', 
             programs: req.params.programId 
         }).lean();
-        res.json(participants);
+
+        if (program.type === 'Group') {
+            // Group logic: Group participants by their team to form logical group choices
+            const groupsByTeam = {};
+            participants.forEach(p => {
+                if (!groupsByTeam[p.team]) groupsByTeam[p.team] = [];
+                groupsByTeam[p.team].push(p);
+            });
+
+            const groupOptions = [];
+            Object.keys(groupsByTeam).forEach(teamName => {
+                const teamMembers = groupsByTeam[teamName];
+                // Create chunks or teams as group options if they have multiple members
+                if (teamMembers.length > 0) {
+                    groupOptions.push({
+                        isGroup: true,
+                        team: teamName,
+                        // Combine participant IDs as a comma-separated string value for form submission
+                        ids: teamMembers.map(m => m._id.toString()).join(','),
+                        displayString: `${teamName} Team Group (${teamMembers.length} members: ${teamMembers.map(m => m.name).join(', ')})`
+                    });
+                }
+            });
+            return res.json({ isGroup: true, options: groupOptions });
+        } else {
+            res.json({ isGroup: false, options: participants });
+        }
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -50,21 +78,34 @@ router.post('/add-result', isAdmin, async (req, res) => {
             throw new Error(`Selected program does not exist.`);
         }
 
-        // Dynamic points rule: 20/15/10 for Team, General, or Group; else 10/7/5
         const isHigherPoints = (programDoc.category === 'Team' || programDoc.section === 'General' || programDoc.type === 'Group');
         const p1Points = isHigherPoints ? 20 : 10;
         const p2Points = isHigherPoints ? 15 : 7;
         const p3Points = isHigherPoints ? 10 : 5;
 
-        const savePlacement = async (chessNumber, scorePoints, positionNum) => {
-            if (!chessNumber || !chessNumber.trim()) return;
-            const userDoc = await User.findOne({ chessNumber: chessNumber.trim(), role: 'PARTICIPANT' });
-            if (!userDoc) throw new Error(`Participant with Chest No. ${chessNumber} not found.`);
+        const savePlacement = async (selectedVal, scorePoints, positionNum) => {
+            if (!selectedVal || !selectedVal.trim()) return;
+
+            let participantIds = [];
+            let teamName = '';
+
+            if (programDoc.type === 'Group') {
+                // selectedVal contains comma-separated IDs from the group option
+                participantIds = selectedVal.split(',').map(id => id.trim()).filter(id => id);
+                const firstUser = await User.findById(participantIds[0]);
+                if (!firstUser) throw new Error(`Invalid group participants selected.`);
+                teamName = firstUser.team;
+            } else {
+                const userDoc = await User.findOne({ _id: selectedVal, role: 'PARTICIPANT' });
+                if (!userDoc) throw new Error(`Selected participant not found.`);
+                participantIds = [userDoc._id];
+                teamName = userDoc.team;
+            }
 
             await Result.create({
                 program: programDoc._id,
-                participants: [userDoc._id],
-                team: userDoc.team,
+                participants: participantIds,
+                team: teamName,
                 score: scorePoints,
                 position: positionNum,
                 status: 'published'
@@ -164,8 +205,15 @@ router.post('/add-user', isAdmin, async (req, res) => {
 
 router.get('/edit-user/:id', isAdmin, async (req, res) => {
     try {
-        const editUser = await User.findById(req.params.id).lean();
-        if (!editUser) throw new Error("Participant not found.");
+        const editUserDoc = await User.findById(req.params.id).lean();
+        if (!editUserDoc) throw new Error("Participant not found.");
+        
+        // Map assigned program IDs to strings for easy lookup in Handlebars
+        const editUser = {
+            ...editUserDoc,
+            programs: editUserDoc.programs ? editUserDoc.programs.map(p => p.toString()) : []
+        };
+
         const programs = await Program.find({}).sort({ name: 1 }).lean();
         res.render('admin/edit-user', { layout: 'main', user: req.session.user, editUser, programs });
     } catch (error) {
@@ -191,7 +239,11 @@ router.post('/edit-user/:id', isAdmin, async (req, res) => {
         await userToUpdate.save();
         res.redirect('/admin/users?success=Participant updated successfully');
     } catch (error) {
-        const editUser = await User.findById(req.params.id).lean();
+        const editUserDoc = await User.findById(req.params.id).lean();
+        const editUser = {
+            ...editUserDoc,
+            programs: editUserDoc.programs ? editUserDoc.programs.map(p => p.toString()) : []
+        };
         const programs = await Program.find({}).sort({ name: 1 }).lean();
         res.render('admin/edit-user', { layout: 'main', user: req.session.user, editUser, programs, error: error.message });
     }
