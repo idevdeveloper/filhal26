@@ -1,4 +1,260 @@
-<div class="max-w-7xl mx-auto px-4 py-8">
+<div class="max-w-3xl mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-extrabold text-gray-900">Add Program Result</h1>
+        <p class="text-gray-500 mt-1">Select category, gender, and program to assign placements</p>
+    </div>
+
+    {{#if error}}
+        <div class="bg-red-50 border border-red-200 p-4 mb-6 rounded-xl text-red-700 font-bold">{{error}}</div>
+    {{/if}}
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <form action="/admin/add-result" method="POST" class="space-y-6">
+            
+            <!-- Category and Gender Selectors to Filter Programs -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Category</label>
+                    <select id="filterCategory" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" onchange="filterPrograms()">
+                        <option value="">-- Select Category --</option>
+                        <option value="Sub Junior">Sub Junior</option>
+                        <option value="Junior">Junior</option>
+                        <option value="Senior">Senior</option>
+                        <option value="General">General</option>
+                        <option value="Team">Team</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Gender</label>
+                    <select id="filterGender" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" onchange="filterPrograms()">
+                        <option value="">-- Select Gender --</option>
+                        <option value="Boys">Boys</option>
+                        <option value="Girls">Girls</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Program Dropdown (Filtered dynamically) -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Select Program</label>
+                <select name="programId" id="programSelect" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" onchange="onProgramChange(this)">
+                    <option value="">-- Choose Category & Gender First --</option>
+                    {{#each programs}}
+                        <option value="{{this._id}}" 
+                                data-category="{{this.category}}" 
+                                data-gender="{{this.gender}}" 
+                                data-type="{{this.type}}" class="program-option">
+                            {{this.name}} ({{this.category}} • {{this.section}} • {{this.type}} {{#if this.gender}}• {{this.gender}}{{/if}})
+                        </option>
+                    {{/each}}
+                </select>
+            </div>
+
+            <!-- Placement Inputs Container -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+                <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 flex flex-col">
+                    <label id="label-first" class="block text-xs font-black text-amber-800 uppercase mb-2">🥇 1st Place (10 pts)</label>
+                    <div id="container-first" class="flex-1">
+                        <select name="firstPlace" class="w-full px-3 py-2 bg-white border border-amber-300 rounded-lg outline-none font-bold participant-input">
+                            <option value="">Select Participant</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col">
+                    <label id="label-second" class="block text-xs font-black text-slate-700 uppercase mb-2">🥈 2nd Place (7 pts)</label>
+                    <div id="container-second" class="flex-1">
+                        <select name="secondPlace" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg outline-none font-bold participant-input">
+                            <option value="">Select Participant</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="bg-orange-50 p-4 rounded-xl border border-orange-200 flex flex-col">
+                    <label id="label-third" class="block text-xs font-black text-orange-800 uppercase mb-2">🥉 3rd Place (5 pts)</label>
+                    <div id="container-third" class="flex-1">
+                        <select name="thirdPlace" class="w-full px-3 py-2 bg-white border border-orange-300 rounded-lg outline-none font-bold participant-input">
+                            <option value="">Select Participant</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Draft and Publish Actions -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                <button type="submit" name="action" value="draft" class="flex-1 py-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg rounded-xl transition shadow-sm text-center">
+                    Save Draft
+                </button>
+                <button type="submit" name="action" value="published" class="flex-1 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg rounded-xl transition shadow-lg shadow-indigo-100 text-center">
+                    Publish Results
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let allProgramOptions = [];
+let cachedOptions = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    const programSelect = document.getElementById('programSelect');
+    allProgramOptions = Array.from(programSelect.querySelectorAll('.program-option'));
+    filterPrograms();
+});
+
+function filterPrograms() {
+    const catVal = document.getElementById('filterCategory').value;
+    const genVal = document.getElementById('filterGender').value;
+    const programSelect = document.getElementById('programSelect');
+
+    programSelect.innerHTML = '<option value="">-- Choose Program --</option>';
+
+    if (!catVal) {
+        programSelect.innerHTML = '<option value="">-- Select Category First --</option>';
+        return;
+    }
+
+    allProgramOptions.forEach(opt => {
+        const pCat = opt.getAttribute('data-category');
+        const pGen = opt.getAttribute('data-gender');
+
+        let matchCategory = (pCat === catVal || (catVal === 'Team' && pCat === 'Team'));
+        if (catVal === 'Team') {
+            matchCategory = (pCat === 'Team');
+        }
+
+        let matchGender = (!pGen || pGen === genVal || catVal === 'Team');
+
+        if (matchCategory && matchGender) {
+            programSelect.appendChild(opt.cloneNode(true));
+        }
+    });
+
+    resetParticipants();
+}
+
+async function onProgramChange(selectElem) {
+    const programId = selectElem.value;
+    if (!programId) {
+        resetParticipants();
+        return;
+    }
+
+    const selectedOption = selectElem.options[selectElem.selectedIndex];
+    const category = selectedOption.getAttribute('data-category');
+    const type = selectedOption.getAttribute('data-type');
+    
+    const labelFirst = document.getElementById('label-first');
+    const labelSecond = document.getElementById('label-second');
+    const labelThird = document.getElementById('label-third');
+
+    if (category === 'General' || category === 'Team') {
+        labelFirst.textContent = '🥇 1st Place (20 pts)';
+        labelSecond.textContent = '🥈 2nd Place (15 pts)';
+        labelThird.textContent = '🥉 3rd Place (10 pts)';
+    } else {
+        labelFirst.textContent = '🥇 1st Place (10 pts)';
+        labelSecond.textContent = '🥈 2nd Place (7 pts)';
+        labelThird.textContent = '🥉 3rd Place (5 pts)';
+    }
+
+    try {
+        const fetchUrl = window.location.pathname.includes('judge') 
+            ? `/judge/api/program-participants/${programId}` 
+            : `/admin/api/program-participants/${programId}`;
+
+        const response = await fetch(fetchUrl);
+        const data = await response.json();
+        cachedOptions = data.options || data;
+
+        const isTeamCat = (category === 'Team');
+        renderPlacementInputs(isTeamCat ? 'team' : (type === 'Group' ? 'group' : 'individual'));
+    } catch (err) {
+        console.error('Error fetching data for program:', err);
+    }
+}
+
+function renderPlacementInputs(mode) {
+    const containers = ['container-first', 'container-second', 'container-third'];
+    const names = ['firstPlace', 'secondPlace', 'thirdPlace'];
+
+    containers.forEach((containerId, index) => {
+        const container = document.getElementById(containerId);
+        const name = names[index];
+
+        if (mode === 'group') {
+            let html = '<div class="max-h-44 overflow-y-auto space-y-1.5 bg-white p-2 rounded-lg border border-gray-200">';
+            if (cachedOptions.length === 0) {
+                html += '<p class="text-xs text-gray-400 text-center py-2">No participants assigned</p>';
+            } else {
+                cachedOptions.forEach(p => {
+                    html += `
+                        <label class="flex items-center space-x-2 text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-50 p-1.5 rounded transition">
+                            <input type="checkbox" name="${name}" value="${p._id}" data-participant-id="${p._id}" class="w-4 h-4 text-indigo-600 rounded border-gray-300 placement-checkbox" onchange="updateCheckboxStates()">
+                            <span>${p.name} (Chest: ${p.chessNumber} • ${p.team})</span>
+                        </label>`;
+                });
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        } else {
+            let html = `<select name="${name}" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg outline-none font-bold participant-input">
+                            <option value="">Select ${mode === 'team' ? 'Team' : 'Participant'}</option>`;
+            cachedOptions.forEach(opt => {
+                const val = mode === 'team' ? opt.team : opt._id;
+                const label = mode === 'team' ? opt.name : `${opt.name} (Chest: ${opt.chessNumber} - ${opt.team})`;
+                html += `<option value="${val}">${label}</option>`;
+            });
+            html += '</select>';
+            container.innerHTML = html;
+        }
+    });
+
+    if (mode === 'group') {
+        updateCheckboxStates();
+    }
+}
+
+function updateCheckboxStates() {
+    const allCheckboxes = document.querySelectorAll('.placement-checkbox');
+    const checkedIds = new Set();
+    
+    allCheckboxes.forEach(cb => {
+        if (cb.checked) {
+            checkedIds.add(cb.getAttribute('data-participant-id'));
+        }
+    });
+
+    allCheckboxes.forEach(cb => {
+        const pId = cb.getAttribute('data-participant-id');
+        const parentLabel = cb.closest('label');
+
+        if (checkedIds.has(pId) && !cb.checked) {
+            cb.disabled = true;
+            if (parentLabel) {
+                parentLabel.style.opacity = '0.35';
+                parentLabel.style.cursor = 'not-allowed';
+            }
+        } else {
+            cb.disabled = false;
+            if (parentLabel) {
+                parentLabel.style.opacity = '1';
+                parentLabel.style.cursor = 'pointer';
+            }
+        }
+    });
+}
+
+function resetParticipants() {
+    ['container-first', 'container-second', 'container-third'].forEach((containerId, index) => {
+        const names = ['firstPlace', 'secondPlace', 'thirdPlace'];
+        document.getElementById(containerId).innerHTML = `
+            <select name="${names[index]}" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg outline-none font-bold participant-input">
+                <option value="">Select Participant</option>
+            </select>`;
+    });
+    cachedOptions = [];
+}
+</script><div class="max-w-7xl mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-8">
         <div>
             <h1 class="text-3xl font-extrabold text-gray-900">Manage Results</h1>
@@ -33,7 +289,7 @@
             <select name="status" class="border-gray-300 rounded-lg shadow-sm px-3 py-2 border text-sm">
                 <option value="">All</option>
                 <option value="published">Published Only</option>
-                <option value="unpublished">Unpublished Only</option>
+                <option value="unpublished">Drafts / Unpublished Only</option>
             </select>
         </div>
         <button type="submit" class="bg-gray-100 text-gray-700 px-5 py-2 rounded-lg font-bold border border-gray-200 hover:bg-gray-200 transition">Apply Filters</button>
@@ -62,7 +318,7 @@
                             <span class="text-xs text-gray-400 font-medium uppercase">{{this.program.type}}</span>
                         </td>
 
-                        <!-- Placements Stack (1st, 2nd, 3rd under one roof) -->
+                        <!-- Placements Stack -->
                         <td class="p-4 space-y-3">
                             {{#each this.placements}}
                                 <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex items-center justify-between gap-4">
@@ -100,17 +356,17 @@
                             {{#if (eq this.status 'published')}}
                                 <span class="bg-green-100 text-green-800 text-xs px-2.5 py-1 rounded-md font-bold">Published</span>
                             {{else}}
-                                <span class="bg-yellow-100 text-yellow-800 text-xs px-2.5 py-1 rounded-md font-bold">Draft</span>
+                                <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-md font-bold">Draft</span>
                             {{/if}}
                         </td>
 
                         <!-- Unified Actions for the Program Block -->
                         <td class="p-4 text-right">
                             <div class="flex justify-end gap-2 items-center">
-                                <!-- Toggle Publish / Hide for entire program -->
+                                <!-- Toggle Publish / Hide Button -->
                                 <form action="/admin/publish-result/{{this._id}}" method="POST" class="inline">
-                                    <button type="submit" class="text-sm px-3 py-1.5 rounded border font-medium {{#if (eq this.status 'published')}}bg-white border-gray-300 text-gray-700 hover:bg-gray-50{{else}}bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100{{/if}}">
-                                        {{#if (eq this.status 'published')}}Hide{{else}}Publish{{/if}}
+                                    <button type="submit" class="text-sm px-3 py-1.5 rounded border font-medium {{#if (eq this.status 'published')}}bg-white border-gray-300 text-gray-700 hover:bg-gray-50{{else}}bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700 shadow-sm{{/if}}">
+                                        {{#if (eq this.status 'published')}}Unpublish / Draft{{else}}Publish Now 🚀{{/if}}
                                     </button>
                                 </form>
                                 

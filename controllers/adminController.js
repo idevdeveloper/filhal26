@@ -13,7 +13,10 @@ router.get('/dashboard', isAdmin, async (req, res) => {
     const totalParticipants = await User.countDocuments({ role: 'PARTICIPANT' });
     const totalJudges = await User.countDocuments({ role: 'JUDGE' });
     const totalPrograms = await Program.countDocuments();
-    const totalResults = await Result.countDocuments();
+    
+    // Count unique programs that have results uploaded
+    const resultsCountAgg = await Result.distinct('program');
+    const totalResults = resultsCountAgg.length;
 
     res.render('admin/dashboard', { 
         layout: 'main', 
@@ -54,8 +57,11 @@ router.get('/api/program-participants/:programId', isAdmin, async (req, res) => 
 
 router.post('/add-result', isAdmin, async (req, res) => {
     try {
-        const { programId, firstPlace, secondPlace, thirdPlace } = req.body;
+        const { programId, firstPlace, secondPlace, thirdPlace, action } = req.body;
         
+        // Handle draft vs published actions
+        const resultStatus = action === 'draft' ? 'draft' : 'published';
+
         const programDoc = await Program.findById(programId);
         if (!programDoc) {
             throw new Error(`Selected program does not exist.`);
@@ -98,7 +104,7 @@ router.post('/add-result', isAdmin, async (req, res) => {
                 score: scorePoints,
                 position: positionNum,
                 isTeamCategoryProgram: programDoc.category === 'Team',
-                status: 'published'
+                status: resultStatus
             });
         };
 
@@ -106,7 +112,8 @@ router.post('/add-result', isAdmin, async (req, res) => {
         await savePlacement(secondPlace, p2Points, 2);
         await savePlacement(thirdPlace, p3Points, 3);
 
-        res.redirect('/admin/dashboard?success=Results Added Successfully');
+        const successMessage = resultStatus === 'draft' ? 'Result Saved as Draft Successfully' : 'Results Published Successfully';
+        res.redirect(`/admin/dashboard?success=${encodeURIComponent(successMessage)}`);
     } catch (error) {
         const programs = await Program.find({}).sort({ name: 1 }).lean();
         res.render('admin/add-result', { layout: 'main', user: req.session.user, programs, error: error.message });
