@@ -113,43 +113,45 @@ app.get('/admin/photos/manage', async (req, res) => {
     }
 });
 
-// Admin Post Upload Handler with automatic directory creation and 1080x1350 resizing using Sharp
-app.post('/admin/photos/upload', upload.single('photo'), async (req, res) => {
+// Admin Post Upload Handler for Multiple Files with automatic directory creation and 1080x1350 resizing using Sharp
+app.post('/admin/photos/upload', upload.array('photo', 20), async (req, res) => {
     if (!res.locals.admin) return res.status(403).send('Unauthorized');
     try {
-        if (!req.file) return res.status(400).send('No file uploaded.');
+        if (!req.files || req.files.length === 0) return res.status(400).send('No files uploaded.');
         
         const uploadDir = path.join(__dirname, 'public', 'uploads');
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
 
-        const filename = `resized-${Date.now()}.jpg`;
-        const outputPath = path.join(uploadDir, filename);
+        for (const file of req.files) {
+            const filename = `resized-${Date.now()}-${Math.round(Math.random() * 1000)}.jpg`;
+            const outputPath = path.join(uploadDir, filename);
 
-        // Process image with sharp: resize to exact 1080x1350 dimensions
-        await sharp(req.file.path)
-            .resize(1080, 1350, {
-                fit: 'cover',
-                position: 'center'
-            })
-            .jpeg({ quality: 90 })
-            .toFile(outputPath);
+            // Process each image with sharp: resize to exact 1080x1350 dimensions
+            await sharp(file.path)
+                .resize(1080, 1350, {
+                    fit: 'cover',
+                    position: 'center'
+                })
+                .jpeg({ quality: 90 })
+                .toFile(outputPath);
 
-        // Clean up original temporary file uploaded by multer
-        if (fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
+            // Clean up original temporary file uploaded by multer
+            if (fs.existsSync(file.path)) {
+                fs.unlinkSync(file.path);
+            }
+
+            // Save reference to database for each individual file
+            await Photo.create({
+                title: req.body.title ? req.body.title.trim() : '',
+                imageUrl: `/uploads/${filename}`
+            });
         }
-
-        // Save reference to database (title is optional)
-        await Photo.create({
-            title: req.body.title ? req.body.title.trim() : '',
-            imageUrl: `/uploads/${filename}`
-        });
 
         res.redirect('/admin/photos/manage');
     } catch (err) {
-        res.status(500).send('Error processing and saving photo: ' + err.message);
+        res.status(500).send('Error processing and saving photos: ' + err.message);
     }
 });
 
