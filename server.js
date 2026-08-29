@@ -28,7 +28,11 @@ app.use(session({
 // 3. MULTER STORAGE CONFIGURATION FOR UPLOADS
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'public/uploads'); // Saves files into public/uploads folder
+        const uploadDir = path.join(__dirname, 'public', 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir); // Saves files into public/uploads folder safely
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
@@ -109,14 +113,19 @@ app.get('/admin/photos/manage', async (req, res) => {
     }
 });
 
-// Admin Post Upload Handler with automatic 1080x1350 resizing using Sharp (and optional title)
+// Admin Post Upload Handler with automatic directory creation and 1080x1350 resizing using Sharp
 app.post('/admin/photos/upload', upload.single('photo'), async (req, res) => {
     if (!res.locals.admin) return res.status(403).send('Unauthorized');
     try {
         if (!req.file) return res.status(400).send('No file uploaded.');
         
+        const uploadDir = path.join(__dirname, 'public', 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+
         const filename = `resized-${Date.now()}.jpg`;
-        const outputPath = path.join(__dirname, 'public', 'uploads', filename);
+        const outputPath = path.join(uploadDir, filename);
 
         // Process image with sharp: resize to exact 1080x1350 dimensions
         await sharp(req.file.path)

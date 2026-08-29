@@ -1,4 +1,4 @@
-<div class="max-w-6xl mx-auto px-4 py-10">
+<div class="max-w-7xl mx-auto px-4 py-12">
     <div class="flex items-center justify-between mb-8">
         <div>
             <h1 class="text-3xl font-black text-gray-900">Manage Media Library</h1>
@@ -15,20 +15,25 @@
     </div>
 
     {{#if photos.length}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {{#each photos}}
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col justify-between">
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col justify-between">
             <div>
-                <div class="h-48 bg-gray-100 overflow-hidden relative">
-                    <img src="{{this.imageUrl}}" alt="{{this.title}}" class="w-full h-full object-cover">
+                <!-- Image Preview Box matching gallery aspect ratio -->
+                <div class="relative w-full aspect-[1080/1350] bg-gray-100 overflow-hidden">
+                    <img src="{{this.imageUrl}}" alt="{{this.title}}" class="absolute inset-0 w-full h-full object-cover">
                 </div>
-                <div class="p-4">
-                    <h3 class="font-bold text-sm text-gray-900 truncate">{{this.title}}</h3>
+                <div class="p-6">
+                    {{#if this.title}}
+                        <h3 class="font-bold text-base text-gray-900 truncate">{{this.title}}</h3>
+                    {{else}}
+                        <p class="text-gray-400 text-sm italic">No title provided</p>
+                    {{/if}}
                 </div>
             </div>
-            <div class="p-4 pt-0">
+            <div class="p-6 pt-0">
                 <form action="/admin/photos/delete/{{this._id}}" method="POST" onsubmit="return confirm('Are you sure you want to delete this photo?');">
-                    <button type="submit" class="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl text-xs transition-colors">
+                    <button type="submit" class="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl text-sm transition-colors">
                         Delete Photo 🗑️
                     </button>
                 </form>

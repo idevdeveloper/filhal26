@@ -24,11 +24,15 @@
             </div>
             
             <div class="p-6 flex-1 flex flex-col justify-between">
-                <h3 class="font-bold text-lg text-gray-900 mb-6">{{this.title}}</h3>
+                {{#if this.title}}
+                    <h3 class="font-bold text-lg text-gray-900 mb-6">{{this.title}}</h3>
+                {{else}}
+                    <div class="mb-6"></div>
+                {{/if}}
                 
                 <div>
-                    <!-- Single Download Button -->
-                    <button onclick="downloadFramedPhoto('{{this.imageUrl}}')" 
+                    <!-- Single Download Button passing the button element reference -->
+                    <button onclick="downloadFramedPhoto(this)" 
                             class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-center text-sm shadow-sm transition-all flex items-center justify-center gap-2">
                         <span>Download</span>
                         <span>🖼️</span>
@@ -46,40 +50,30 @@
 </div>
 
 <script>
-    function downloadFramedPhoto(photoUrl) {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+    function downloadFramedPhoto(buttonElement) {
+        try {
+            const card = buttonElement.closest('.bg-white');
+            const baseImg = card.querySelector('img:not([alt="Frame"])');
+            const frameImg = card.querySelector('img[alt="Frame"]');
 
-        const baseImage = new Image();
-        baseImage.crossOrigin = "anonymous";
-        baseImage.src = photoUrl;
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
 
-        baseImage.onload = function () {
-            const frameImage = new Image();
-            frameImage.src = '/images/frame.png';
+            canvas.width = baseImg.naturalWidth || 1080;
+            canvas.height = baseImg.naturalHeight || 1350;
 
-            frameImage.onload = function () {
-                canvas.width = baseImage.naturalWidth;
-                canvas.height = baseImage.naturalHeight;
+            ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
 
-                ctx.drawImage(baseImage, 0, 0);
-                ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/jpeg', 1.0);
 
-                const dataURL = canvas.toDataURL('image/jpeg', 1.0);
-
-                const link = document.createElement('a');
-                link.download = 'filhal-fest-framed-photo.jpg';
-                link.href = dataURL;
-                link.click();
-            };
-
-            frameImage.onerror = function() {
-                alert("Error loading the frame graphic. Please verify /public/images/frame.png exists.");
-            };
-        };
-        
-        baseImage.onerror = function() {
-            alert("Error loading the source photo.");
-        };
+            const link = document.createElement('a');
+            link.download = 'filhal-fest-framed-photo.jpg';
+            link.href = dataURL;
+            link.click();
+        } catch (err) {
+            console.error(err);
+            alert("Error generating the framed download. Please check the console.");
+        }
     }
 </script>
