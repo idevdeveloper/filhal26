@@ -2,11 +2,11 @@
     <div class="flex items-center justify-between mb-8">
         <div>
             <h1 class="text-3xl font-black text-gray-900">Filhal Fest Photo Gallery</h1>
-            <p class="text-gray-500 text-sm mt-1">Download your memorable moments with or without the custom frame in high resolution.</p>
+            <p class="text-gray-500 text-sm mt-1">Explore event moments framed and ready for download.</p>
         </div>
         {{#if admin}}
-        <a href="/admin/photos/upload" class="px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow hover:bg-indigo-700 text-sm">
-            + Upload New Photo
+        <a href="/admin/photos/manage" class="px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow hover:bg-indigo-700 text-sm">
+            Manage Media ⚙️
         </a>
         {{/if}}
     </div>
@@ -15,24 +15,23 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {{#each photos}}
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-            <div class="relative h-72 bg-gray-100 overflow-hidden">
-                <img src="{{this.imageUrl}}" alt="{{this.title}}" class="w-full h-full object-cover">
+            <!-- Preview Box showing photo with frame overlaid directly -->
+            <div class="relative w-full aspect-[1080/1350] bg-gray-100 overflow-hidden">
+                <!-- Base Photo -->
+                <img src="{{this.imageUrl}}" alt="{{this.title}}" class="absolute inset-0 w-full h-full object-cover">
+                <!-- Overlay Frame -->
+                <img src="/images/frame.png" alt="Frame" class="absolute inset-0 w-full h-full object-cover pointer-events-none">
             </div>
             
             <div class="p-6 flex-1 flex flex-col justify-between">
                 <h3 class="font-bold text-lg text-gray-900 mb-6">{{this.title}}</h3>
                 
-                <div class="flex gap-3">
-                    <!-- Option 1: Download Original Clean Image -->
-                    <a href="{{this.imageUrl}}" download target="_blank" 
-                       class="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl text-center text-sm transition-colors">
-                        Original
-                    </a>
-                    
-                    <!-- Option 2: Client-Side Merged Frame Download -->
-                    <button onclick="downloadWithFrame('{{this.imageUrl}}')" 
-                            class="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-center text-sm shadow-sm transition-colors">
-                        With Frame 🖼️
+                <div>
+                    <!-- Single Download Button -->
+                    <button onclick="downloadFramedPhoto('{{this.imageUrl}}')" 
+                            class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-center text-sm shadow-sm transition-all flex items-center justify-center gap-2">
+                        <span>Download</span>
+                        <span>🖼️</span>
                     </button>
                 </div>
             </div>
@@ -47,7 +46,7 @@
 </div>
 
 <script>
-    function downloadWithFrame(photoUrl) {
+    function downloadFramedPhoto(photoUrl) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
 
@@ -57,20 +56,15 @@
 
         baseImage.onload = function () {
             const frameImage = new Image();
-            frameImage.src = '/images/frame.png'; // Make sure your frame is saved here
+            frameImage.src = '/images/frame.png';
 
             frameImage.onload = function () {
-                // Set canvas resolution to precisely match the master photo's native pixel width/height
                 canvas.width = baseImage.naturalWidth;
                 canvas.height = baseImage.naturalHeight;
 
-                // 1. Draw original base image
                 ctx.drawImage(baseImage, 0, 0);
-
-                // 2. Overlay transparent frame scaled to cover full dimensions
                 ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
 
-                // 3. Export as maximum-quality JPEG (1.0 quality flag stops compression artifacts)
                 const dataURL = canvas.toDataURL('image/jpeg', 1.0);
 
                 const link = document.createElement('a');

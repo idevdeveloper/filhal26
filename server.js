@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt'); // Required for hashing the admin password
 const multer = require('multer'); // <--- Added for photo file uploads
 const path = require('path');
 const fs = require('fs');
+const sharp = require('sharp'); // <--- Added for image resizing (1080x1350)
 const Photo = require('./models/Photo'); // <--- Added Photo Model
 
 const app = express();
@@ -108,20 +109,38 @@ app.get('/admin/photos/manage', async (req, res) => {
     }
 });
 
-// Admin Post Upload Handler
+// Admin Post Upload Handler with automatic 1080x1350 resizing using Sharp
 app.post('/admin/photos/upload', upload.single('photo'), async (req, res) => {
     if (!res.locals.admin) return res.status(403).send('Unauthorized');
     try {
         if (!req.file) return res.status(400).send('No file uploaded.');
         
+        const filename = `resized-${Date.now()}.jpg`;
+        const outputPath = path.join(__dirname, 'public', 'uploads', filename);
+
+        // Process image with sharp: resize to exact 1080x1350 dimensions
+        await sharp(req.file.path)
+            .resize(1080, 1350, {
+                fit: 'cover',
+                position: 'center'
+            })
+            .jpeg({ quality: 90 })
+            .toFile(outputPath);
+
+        // Clean up original temporary file uploaded by multer
+        if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+
+        // Save reference to database
         await Photo.create({
             title: req.body.title,
-            imageUrl: `/uploads/${req.file.filename}`
+            imageUrl: `/uploads/${filename}`
         });
 
         res.redirect('/admin/photos/manage');
     } catch (err) {
-        res.status(500).send('Error saving photo: ' + err.message);
+        res.status(500).send('Error processing and saving photo: ' + err.message);
     }
 });
 
