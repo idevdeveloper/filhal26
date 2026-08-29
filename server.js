@@ -109,7 +109,7 @@ app.get('/admin/photos/manage', async (req, res) => {
     }
 });
 
-// Admin Post Upload Handler with automatic 1080x1350 resizing using Sharp
+// Admin Post Upload Handler with automatic 1080x1350 resizing using Sharp (and optional title)
 app.post('/admin/photos/upload', upload.single('photo'), async (req, res) => {
     if (!res.locals.admin) return res.status(403).send('Unauthorized');
     try {
@@ -132,9 +132,9 @@ app.post('/admin/photos/upload', upload.single('photo'), async (req, res) => {
             fs.unlinkSync(req.file.path);
         }
 
-        // Save reference to database
+        // Save reference to database (title is optional)
         await Photo.create({
-            title: req.body.title,
+            title: req.body.title ? req.body.title.trim() : '',
             imageUrl: `/uploads/${filename}`
         });
 
