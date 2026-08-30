@@ -153,7 +153,7 @@ app.post('/admin/photos/upload', upload.array('photo', 20), async (req, res) => 
     }
 });
 
-// Admin Delete Photo Handler
+// Admin Delete Single Photo Handler
 app.post('/admin/photos/delete/:id', async (req, res) => {
     if (!res.locals.admin) return res.status(403).send('Unauthorized');
     try {
@@ -161,6 +161,17 @@ app.post('/admin/photos/delete/:id', async (req, res) => {
         res.redirect('/admin/photos/manage');
     } catch (err) {
         res.status(500).send('Error deleting photo: ' + err.message);
+    }
+});
+
+// Admin Clear All Photos Handler
+app.post('/admin/photos/clear-all', async (req, res) => {
+    if (!res.locals.admin) return res.status(403).send('Unauthorized');
+    try {
+        await Photo.deleteMany({});
+        res.redirect('/admin/photos/manage');
+    } catch (err) {
+        res.status(500).send('Error clearing photos: ' + err.message);
     }
 });
 
