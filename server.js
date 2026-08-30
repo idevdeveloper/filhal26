@@ -1,18 +1,18 @@
 // server.js
+require('dotenv').config();
 const express = require('express');
 const { engine } = require('express-handlebars');
 const mongoose = require('mongoose');
 const session = require('express-session');
-const bcrypt = require('bcrypt'); // Required for hashing the admin password
-const multer = require('multer'); // <--- Added for photo file uploads
+const bcrypt = require('bcrypt');
+const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-const sharp = require('sharp'); // <--- Added for image resizing (1080x1350)
-const Photo = require('./models/Photo'); // <--- Added Photo Model
+const cloudinary = require('cloudinary').v2;
+const Photo = require('./models/Photo');
 
 const app = express();
 
-// 1. ESSENTIAL MIDDLEWARE (Must be at the very top so req.body works)
+// 1. ESSENTIAL MIDDLEWARE
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static('public'));
@@ -22,25 +22,20 @@ app.use(session({
     secret: 'filhal-fest-super-secret-key',
     resave: true,
     saveUninitialized: true,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 } // 7 Days persistence
+    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }
 }));
 
-// 3. MULTER STORAGE CONFIGURATION FOR UPLOADS
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, 'public', 'uploads');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir); // Saves files into public/uploads folder safely
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
-    }
+// 3. CLOUDINARY CONFIGURATION
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
-const upload = multer({ storage: storage });
 
-// 4. SERVER BOOT ID & GLOBAL LOCALS
+// 4. MULTER MEMORY STORAGE
+const upload = multer({ storage: multer.memoryStorage() });
+
+// 5. SERVER BOOT ID & GLOBAL LOCALS
 const serverBootId = Date.now().toString();
 
 app.use((req, res, next) => {
@@ -52,14 +47,14 @@ app.use((req, res, next) => {
     next();
 });
 
-// 5. DATABASE CONNECTION
+// 6. DATABASE CONNECTION
 const dbURI = process.env.MONGO_URI || 'mongodb+srv://newww:nasir123@cluster1011.ir2agix.mongodb.net/filhalfest?appName=Cluster1011';
 
 mongoose.connect(dbURI)
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => console.error('Database connection error:', err));
 
-// 6. HANDLEBARS SETUP
+// 7. HANDLEBARS SETUP
 app.engine('.hbs', engine({
     extname: '.hbs',
     helpers: {
@@ -72,12 +67,14 @@ app.engine('.hbs', engine({
         includes: (array, value) => {
             if (!array) return false;
             return array.map(String).includes(String(value));
-        }
+        },
+        getFramePath: (gender, orientation) => `/images/frame-${gender || 'boys'}-${orientation || 'portrait'}.png`,
+        getAspectClass: (orientation) => orientation === 'landscape' ? 'aspect-[1080/566]' : 'aspect-[1080/1350]'
     }
 }));
 app.set('view engine', '.hbs');
 
-// 7. TEMPORARY ROUTE TO CREATE ADMIN
+// 8. TEMPORARY ROUTE TO CREATE ADMIN
 app.get('/create-admin', async (req, res) => {
     try {
         const User = require('./models/User'); 
@@ -95,14 +92,12 @@ app.get('/create-admin', async (req, res) => {
     }
 });
 
-// 8. PHOTO UPLOAD, MANAGEMENT & GALLERY ROUTES
-// Admin Upload Page View (maps to your existing views/admin-upload-photo.hbs)
+// 9. PHOTO UPLOAD, MANAGEMENT & GALLERY ROUTES
 app.get('/admin/photos/upload', (req, res) => {
     if (!res.locals.admin) return res.redirect('/admin/login');
     res.render('admin-upload-photo'); 
 });
 
-// Admin Media Management Dashboard (maps to views/admin-manage.hbs for listing and deleting)
 app.get('/admin/photos/manage', async (req, res) => {
     if (!res.locals.admin) return res.redirect('/admin/login');
     try {
@@ -113,45 +108,48 @@ app.get('/admin/photos/manage', async (req, res) => {
     }
 });
 
-// Admin Post Upload Handler for Multiple Files with automatic directory creation and 1080x1350 resizing using Sharp
+// Multiple Upload Handler with Fixed 1080x1350 (Portrait) and 1080x566 (Landscape) Dimensions
 app.post('/admin/photos/upload', upload.array('photo', 20), async (req, res) => {
     if (!res.locals.admin) return res.status(403).send('Unauthorized');
     try {
         if (!req.files || req.files.length === 0) return res.status(400).send('No files uploaded.');
-        
-        const uploadDir = path.join(__dirname, 'public', 'uploads');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
+
+        const gender = req.body.gender || 'boys';
+        const orientation = req.body.orientation || 'portrait';
+
+        // Set exact dimensions: 1080x1350 for portrait, 1080x566 for landscape
+        const width = 1080;
+        const height = orientation === 'landscape' ? 566 : 1350;
 
         for (const file of req.files) {
-            const filename = `resized-${Date.now()}-${Math.round(Math.random() * 1000)}.jpg`;
-            const outputPath = path.join(uploadDir, filename);
+            const uploadPromise = new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    {
+                        folder: 'filhal-fest',
+                        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif'],
+                        transformation: [{ width, height, crop: 'fill', gravity: 'center' }]
+                    },
+                    (error, result) => {
+                        if (error) reject(error);
+                        else resolve(result);
+                    }
+                );
+                stream.end(file.buffer);
+            });
 
-            // Process each image with sharp: resize to exact 1080x1350 dimensions
-            await sharp(file.path)
-                .resize(1080, 1350, {
-                    fit: 'cover',
-                    position: 'center'
-                })
-                .jpeg({ quality: 90 })
-                .toFile(outputPath);
+            const result = await uploadPromise;
 
-            // Clean up original temporary file uploaded by multer
-            if (fs.existsSync(file.path)) {
-                fs.unlinkSync(file.path);
-            }
-
-            // Save reference to database for each individual file
             await Photo.create({
                 title: req.body.title ? req.body.title.trim() : '',
-                imageUrl: `/uploads/${filename}`
+                imageUrl: result.secure_url,
+                gender,
+                orientation
             });
         }
 
         res.redirect('/admin/photos/manage');
     } catch (err) {
-        res.status(500).send('Error processing and saving photos: ' + err.message);
+        res.status(500).send('Error saving photos to cloud: ' + err.message);
     }
 });
 
@@ -159,22 +157,13 @@ app.post('/admin/photos/upload', upload.array('photo', 20), async (req, res) => 
 app.post('/admin/photos/delete/:id', async (req, res) => {
     if (!res.locals.admin) return res.status(403).send('Unauthorized');
     try {
-        const photo = await Photo.findById(req.params.id);
-        if (photo) {
-            const filePath = path.join(__dirname, 'public', photo.imageUrl);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
-            await Photo.findByIdAndDelete(req.params.id);
-        }
-
+        await Photo.findByIdAndDelete(req.params.id);
         res.redirect('/admin/photos/manage');
     } catch (err) {
         res.status(500).send('Error deleting photo: ' + err.message);
     }
 });
 
-// User Gallery Page View
 app.get('/gallery', async (req, res) => {
     try {
         const photos = await Photo.find().sort({ createdAt: -1 }).lean();
@@ -184,7 +173,7 @@ app.get('/gallery', async (req, res) => {
     }
 });
 
-// 9. CONTROLLER ROUTES (Registered AFTER body parser middleware)
+// 10. CONTROLLER ROUTES
 const judgeController = require('./controllers/judgeController');
 
 app.get('/judge/login', judgeController.getLogin);

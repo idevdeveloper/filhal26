@@ -15,12 +15,10 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {{#each photos}}
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-            <!-- Preview Box showing photo with frame overlaid directly -->
-            <div class="relative w-full aspect-[1080/1350] bg-gray-100 overflow-hidden">
-                <!-- Base Photo -->
-                <img src="{{this.imageUrl}}" alt="{{this.title}}" class="absolute inset-0 w-full h-full object-cover">
-                <!-- Overlay Frame -->
-                <img src="/images/frame.png" alt="Frame" class="absolute inset-0 w-full h-full object-cover pointer-events-none">
+            <!-- Dynamic container sizing & matching frame asset lookup -->
+            <div class="relative w-full {{getAspectClass this.orientation}} bg-gray-100 overflow-hidden">
+                <img src="{{this.imageUrl}}" crossorigin="anonymous" alt="{{this.title}}" class="absolute inset-0 w-full h-full object-cover">
+                <img src="{{getFramePath this.gender this.orientation}}" crossorigin="anonymous" alt="Frame" class="absolute inset-0 w-full h-full object-cover pointer-events-none">
             </div>
             
             <div class="p-6 flex-1 flex flex-col justify-between">
@@ -31,7 +29,6 @@
                 {{/if}}
                 
                 <div>
-                    <!-- Single Download Button passing the button element reference -->
                     <button onclick="downloadFramedPhoto(this)" 
                             class="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-center text-sm shadow-sm transition-all flex items-center justify-center gap-2">
                         <span>Download</span>
@@ -59,8 +56,8 @@
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
 
-            canvas.width = baseImg.naturalWidth || 1080;
-            canvas.height = baseImg.naturalHeight || 1350;
+            canvas.width = baseImg.naturalWidth;
+            canvas.height = baseImg.naturalHeight;
 
             ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
             ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
