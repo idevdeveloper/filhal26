@@ -69,7 +69,7 @@ app.engine('.hbs', engine({
             return array.map(String).includes(String(value));
         },
         getFramePath: (gender, orientation) => `/images/frame-${gender || 'boys'}-${orientation || 'portrait'}.png`,
-        getAspectClass: (orientation) => orientation === 'landscape' ? 'aspect-[1080/566]' : 'aspect-[1080/1350]'
+        getAspectClass: (orientation) => orientation === 'landscape' ? 'aspect-[4/3]' : 'aspect-[1080/1350]'
     }
 }));
 app.set('view engine', '.hbs');
@@ -117,9 +117,9 @@ app.post('/admin/photos/upload', upload.array('photo', 20), async (req, res) => 
         const gender = req.body.gender || 'boys';
         const orientation = req.body.orientation || 'portrait';
 
-        // Set exact dimensions: 1080x1350 for portrait, 1080x566 for landscape
-        const width = 1080;
-        const height = orientation === 'landscape' ? 566 : 1350;
+        // Set exact dimensions: 1080x1350 for portrait, 1536x1152 for landscape
+        const width = orientation === 'landscape' ? 1536 : 1080;
+        const height = orientation === 'landscape' ? 1152 : 1350;
 
         for (const file of req.files) {
             const uploadPromise = new Promise((resolve, reject) => {
