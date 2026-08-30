@@ -85,10 +85,11 @@ exports.submitResult = async (req, res) => {
             throw new Error(`The selected program does not exist.`);
         }
 
-        const isHigherPoints = (programDoc.category === 'General' || programDoc.category === 'Team' || programDoc.type === 'Group');
-        const p1Points = isHigherPoints ? 20 : 10;
-        const p2Points = isHigherPoints ? 15 : 7;
-        const p3Points = isHigherPoints ? 10 : 5;
+        // Team category & General section group/general programs get 20, 15, 10. Senior/Junior/Sub-Junior group programs get 10, 7, 5.
+        const isTeamOrGeneralGroup = (programDoc.category === 'Team') || (programDoc.category === 'General' && programDoc.type === 'Group');
+        const p1Points = isTeamOrGeneralGroup ? 20 : 10;
+        const p2Points = isTeamOrGeneralGroup ? 15 : 7;
+        const p3Points = isTeamOrGeneralGroup ? 10 : 5;
 
         const savePlacement = async (placementInput, scorePoints, positionNum) => {
             if (!placementInput) return;

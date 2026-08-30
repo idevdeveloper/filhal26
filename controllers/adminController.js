@@ -67,10 +67,10 @@ router.post('/add-result', isAdmin, async (req, res) => {
             throw new Error(`Selected program does not exist.`);
         }
 
-        const isHigherPoints = (programDoc.category === 'Team' || programDoc.section === 'General' || programDoc.type === 'Group');
-        const p1Points = isHigherPoints ? 20 : 10;
-        const p2Points = isHigherPoints ? 15 : 7;
-        const p3Points = isHigherPoints ? 10 : 5;
+        const isTeamOrGeneralGroup = (programDoc.category === 'Team') || (programDoc.category === 'General' && programDoc.type === 'Group');
+        const p1Points = isTeamOrGeneralGroup ? 20 : 10;
+        const p2Points = isTeamOrGeneralGroup ? 15 : 7;
+        const p3Points = isTeamOrGeneralGroup ? 10 : 5;
 
         const savePlacement = async (placementInput, scorePoints, positionNum) => {
             if (!placementInput) return;
