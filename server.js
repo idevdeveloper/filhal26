@@ -47,32 +47,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// TEMPORARY LOCKDOWN MIDDLEWARE: Restricts public users to /gallery only, while Admin has full access
-app.use((req, res, next) => {
-    const reqPath = req.path;
-    const isAdmin = res.locals.admin;
-
-    // Allow admins everywhere
-    if (isAdmin) return next();
-
-    // Allow public access only to gallery, login/logout, and admin login pages/assets
-    const isAllowed = 
-        reqPath === '/gallery' || 
-        reqPath.startsWith('/admin') || 
-        reqPath.startsWith('/login') || 
-        reqPath.startsWith('/logout') || 
-        reqPath.startsWith('/images') || 
-        reqPath.startsWith('/css') || 
-        reqPath.startsWith('/js');
-
-    if (isAllowed) {
-        return next();
-    }
-
-    // Redirect all other public pages to the gallery
-    res.redirect('/gallery');
-});
-
 // 6. DATABASE CONNECTION
 const dbURI = process.env.MONGO_URI || 'mongodb+srv://newww:nasir123@cluster1011.ir2agix.mongodb.net/filhalfest?appName=Cluster1011';
 

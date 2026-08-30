@@ -1,86 +1,104 @@
-<div class="container mt-5 mb-5">
-    <div class="text-center mb-5">
-        <h1 class="fw-bold">🏆 Filhal Fest Individual Champions</h1>
-        <p class="text-muted">Honoring the top-performing individuals across categories and genders.</p>
+<div class="container mx-auto px-4 py-12 max-w-7xl">
+    <div class="text-center mb-12">
+        <h1 class="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">🏆 Filhal Fest Individual Champions & Leaderboard</h1>
+        <p class="text-gray-500 text-sm md:text-base mt-2">Honoring top-performing individuals and complete student score standings across individual categories.</p>
     </div>
 
-    <div class="row g-4">
-        <!-- Sub Junior Boys -->
-        <div class="col-md-4">
-            <div class="card shadow border-primary h-100">
-                <div class="card-header bg-primary text-white fw-semibold">Sub Junior — Boys</div>
-                <div class="card-body text-center py-4">
-                    <h3 class="card-title text-dark fw-bold mb-3">{{champions.subJuniorBoys.name}}</h3>
-                    <p class="mb-1 text-secondary">Chest No: <strong>{{champions.subJuniorBoys.chestNumber}}</strong></p>
-                    <p class="mb-3 text-secondary">Team: <strong class="text-uppercase">{{champions.subJuniorBoys.team}}</strong></p>
-                    <div class="badge bg-primary fs-6 px-3 py-2">Points: {{champions.subJuniorBoys.totalPoints}}</div>
+    <div class="space-y-16">
+        {{!-- 1. SUB JUNIOR BOYS --}}
+        {{> individualSection title="Sub Junior — Boys" champ=champions.subJuniorBoysData.champion list=champions.subJuniorBoysData.leaderboard}}
+
+        {{!-- 2. SUB JUNIOR GIRLS --}}
+        {{> individualSection title="Sub Junior — Girls" champ=champions.subJuniorGirlsData.champion list=champions.subJuniorGirlsData.leaderboard}}
+
+        {{!-- 3. JUNIOR BOYS --}}
+        {{> individualSection title="Junior — Boys" champ=champions.juniorBoysData.champion list=champions.juniorBoysData.leaderboard}}
+
+        {{!-- 4. JUNIOR GIRLS --}}
+        {{> individualSection title="Junior — Girls" champ=champions.juniorGirlsData.champion list=champions.juniorGirlsData.leaderboard}}
+
+        {{!-- 5. SENIOR BOYS --}}
+        {{> individualSection title="Senior — Boys" champ=champions.seniorBoysData.champion list=champions.seniorBoysData.leaderboard}}
+
+        {{!-- 6. SENIOR GIRLS --}}
+        {{> individualSection title="Senior — Girls" champ=champions.seniorGirlsData.champion list=champions.seniorGirlsData.leaderboard}}
+    </div>
+</div>
+
+<!-- Reusable Handlebars Partial Template Block with Dropdown Details -->
+{{#*inline "individualSection"}}
+<div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-gray-900 text-white px-8 py-5 font-extrabold text-lg md:text-xl flex justify-between items-center">
+        <span>{{title}}</span>
+        <span class="text-xs uppercase bg-white/10 text-gray-300 px-3 py-1.5 rounded-xl font-bold tracking-wider">Individual Standings</span>
+    </div>
+    
+    <div class="p-6 md:p-8">
+        <!-- Champion Spotlight Card -->
+        <div class="bg-gradient-to-br from-amber-50/50 to-orange-50/30 border border-amber-200/60 rounded-2xl p-6 mb-8 flex flex-col md:flex-row justify-between items-center gap-6 shadow-sm">
+            <div class="flex items-center gap-4 text-center md:text-left">
+                <div class="w-14 h-14 bg-amber-400 text-white rounded-2xl flex items-center justify-center text-2xl shadow-md shrink-0">
+                    👑
                 </div>
+                <div>
+                    <span class="text-xs uppercase font-extrabold text-amber-600 tracking-wider">Category Champion</span>
+                    <h3 class="text-xl md:text-2xl font-black text-gray-900 mt-0.5">{{champ.name}}</h3>
+                    <p class="text-xs md:text-sm text-gray-500 mt-1">Chest No: <strong class="text-gray-900 font-bold">{{champ.chestNumber}}</strong> • Team: <strong class="uppercase text-gray-900 font-bold">{{champ.team}}</strong></p>
+                </div>
+            </div>
+            <div class="bg-gray-900 text-white px-6 py-3 rounded-2xl font-black text-base md:text-lg shadow-sm shrink-0">
+                {{champ.totalPoints}} pts
             </div>
         </div>
 
-        <!-- Sub Junior Girls -->
-        <div class="col-md-4">
-            <div class="card shadow border-danger h-100">
-                <div class="card-header bg-danger text-white fw-semibold">Sub Junior — Girls</div>
-                <div class="card-body text-center py-4">
-                    <h3 class="card-title text-dark fw-bold mb-3">{{champions.subJuniorGirls.name}}</h3>
-                    <p class="mb-1 text-secondary">Chest No: <strong>{{champions.subJuniorGirls.chestNumber}}</strong></p>
-                    <p class="mb-3 text-secondary">Team: <strong class="text-uppercase">{{champions.subJuniorGirls.team}}</strong></p>
-                    <div class="badge bg-danger fs-6 px-3 py-2">Points: {{champions.subJuniorGirls.totalPoints}}</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Junior Boys -->
-        <div class="col-md-4">
-            <div class="card shadow border-primary h-100">
-                <div class="card-header bg-primary text-white fw-semibold">Junior — Boys</div>
-                <div class="card-body text-center py-4">
-                    <h3 class="card-title text-dark fw-bold mb-3">{{champions.juniorBoys.name}}</h3>
-                    <p class="mb-1 text-secondary">Chest No: <strong>{{champions.juniorBoys.chestNumber}}</strong></p>
-                    <p class="mb-3 text-secondary">Team: <strong class="text-uppercase">{{champions.juniorBoys.team}}</strong></p>
-                    <div class="badge bg-primary fs-6 px-3 py-2">Points: {{champions.juniorBoys.totalPoints}}</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Junior Girls -->
-        <div class="col-md-4">
-            <div class="card shadow border-danger h-100">
-                <div class="card-header bg-danger text-white fw-semibold">Junior — Girls</div>
-                <div class="card-body text-center py-4">
-                    <h3 class="card-title text-dark fw-bold mb-3">{{champions.juniorGirls.name}}</h3>
-                    <p class="mb-1 text-secondary">Chest No: <strong>{{champions.juniorGirls.chestNumber}}</strong></p>
-                    <p class="mb-3 text-secondary">Team: <strong class="text-uppercase">{{champions.juniorGirls.team}}</strong></p>
-                    <div class="badge bg-danger fs-6 px-3 py-2">Points: {{champions.juniorGirls.totalPoints}}</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Senior Boys -->
-        <div class="col-md-4">
-            <div class="card shadow border-primary h-100">
-                <div class="card-header bg-primary text-white fw-semibold">Senior — Boys</div>
-                <div class="card-body text-center py-4">
-                    <h3 class="card-title text-dark fw-bold mb-3">{{champions.seniorBoys.name}}</h3>
-                    <p class="mb-1 text-secondary">Chest No: <strong>{{champions.seniorBoys.chestNumber}}</strong></p>
-                    <p class="mb-3 text-secondary">Team: <strong class="text-uppercase">{{champions.seniorBoys.team}}</strong></p>
-                    <div class="badge bg-primary fs-6 px-3 py-2">Points: {{champions.seniorBoys.totalPoints}}</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Senior Girls -->
-        <div class="col-md-4">
-            <div class="card shadow border-danger h-100">
-                <div class="card-header bg-danger text-white fw-semibold">Senior — Girls</div>
-                <div class="card-body text-center py-4">
-                    <h3 class="card-title text-dark fw-bold mb-3">{{champions.seniorGirls.name}}</h3>
-                    <p class="mb-1 text-secondary">Chest No: <strong>{{champions.seniorGirls.chestNumber}}</strong></p>
-                    <p class="mb-3 text-secondary">Team: <strong class="text-uppercase">{{champions.seniorGirls.team}}</strong></p>
-                    <div class="badge bg-danger fs-6 px-3 py-2">Points: {{champions.seniorGirls.totalPoints}}</div>
-                </div>
-            </div>
+        <!-- Full Student Leaderboard Table with Expandable Breakdown -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-gray-100 text-xs text-gray-400 uppercase tracking-wider">
+                        <th class="py-3 px-4 font-bold">Rank</th>
+                        <th class="py-3 px-4 font-bold">Chest No</th>
+                        <th class="py-3 px-4 font-bold">Participant Name</th>
+                        <th class="py-3 px-4 font-bold">Team</th>
+                        <th class="py-3 px-4 font-bold text-right">Total Score</th>
+                        <th class="py-3 px-4 font-bold text-center">Score Breakdown</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50 text-sm">
+                    {{#each list}}
+                    <tr class="hover:bg-gray-50/80 transition-colors">
+                        <td class="py-3.5 px-4 font-extrabold text-gray-500">#{{this.rank}}</td>
+                        <td class="py-3.5 px-4 font-semibold text-gray-700">{{this.chestNumber}}</td>
+                        <td class="py-3.5 px-4 font-bold text-gray-900">{{this.name}}</td>
+                        <td class="py-3.5 px-4 uppercase text-gray-600 font-semibold text-xs tracking-wider">{{this.team}}</td>
+                        <td class="py-3.5 px-4 text-right font-black text-indigo-600">{{this.totalPoints}}</td>
+                        <td class="py-3.5 px-4 text-center">
+                            <details class="group cursor-pointer">
+                                <summary class="list-none inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded-lg text-xs font-bold transition">
+                                    <span>View Programs</span>
+                                    <svg class="w-3 h-3 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </summary>
+                                <div class="mt-2 text-left bg-gray-50 p-3 rounded-xl border border-gray-200 text-xs shadow-inner space-y-1">
+                                    {{#each this.programs}}
+                                    <div class="flex justify-between items-center py-1 border-b border-gray-200/60 last:border-0">
+                                        <span class="font-medium text-gray-800">{{this.programName}}</span>
+                                        <span class="font-bold text-indigo-600 bg-white px-2 py-0.5 rounded shadow-sm">{{this.score}} pts</span>
+                                    </div>
+                                    {{else}}
+                                    <p class="text-gray-400 italic">No scored programs recorded.</p>
+                                    {{/each}}
+                                </div>
+                            </details>
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-gray-400 italic font-medium">No participant records found for this category yet.</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
+{{/inline}}

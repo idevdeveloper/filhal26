@@ -156,63 +156,90 @@ router.get('/logout', (req, res) => {
     });
 });
 
-async function getTopChampion(category, gender) {
+async function getCategoryLeaderboardData(category, gender) {
     try {
-        const leaderboard = await Result.aggregate([
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'participants', // Fixed to match array field name
-                    foreignField: '_id',
-                    as: 'participantInfo'
-                }
-            },
-            { $unwind: '$participantInfo' },
-            { 
-                $match: { 
-                    'participantInfo.category': category, 
-                    'participantInfo.gender': gender,
-                    'participantInfo.role': 'PARTICIPANT',
-                    'status': 'published'
-                } 
-            },
-            {
-                $group: {
-                    _id: '$participantInfo._id',
-                    name: { $first: '$participantInfo.name' },
-                    chestNumber: { $first: '$participantInfo.chessNumber' },
-                    team: { $first: '$participantInfo.team' },
-                    totalPoints: { $sum: '$score' }
-                }
-            },
-            { $sort: { totalPoints: -1 } },
-            { $limit: 1 }
-        ]);
+        const results = await Result.find({ status: 'published' })
+            .populate('program')
+            .populate('participants')
+            .lean();
 
-        return leaderboard[0] || { name: 'Yet to be decided', chestNumber: '-', team: '-', totalPoints: 0 };
+        const studentMap = {};
+
+        results.forEach(resItem => {
+            const prog = resItem.program;
+            if (!prog) return;
+
+            // Exclude General category (both individual and group) and any group programs
+            const categoryStr = (prog.category || '').toLowerCase();
+            const typeStr = (prog.type || '').toLowerCase();
+            
+            if (categoryStr === 'general' || typeStr === 'group') {
+                return;
+            }
+
+            if (!resItem.participants || resItem.participants.length === 0) return;
+
+            resItem.participants.forEach(participant => {
+                if (
+                    participant.category === category &&
+                    participant.gender === gender &&
+                    participant.role === 'PARTICIPANT'
+                ) {
+                    const pId = participant._id.toString();
+                    if (!studentMap[pId]) {
+                        studentMap[pId] = {
+                            _id: participant._id,
+                            name: participant.name,
+                            chestNumber: participant.chessNumber,
+                            team: participant.team,
+                            totalPoints: 0,
+                            programs: []
+                        };
+                    }
+
+                    studentMap[pId].totalPoints += resItem.score;
+                    studentMap[pId].programs.push({
+                        programName: prog.name,
+                        score: resItem.score,
+                        position: resItem.position || '-'
+                    });
+                }
+            });
+        });
+
+        const leaderboard = Object.values(studentMap).sort((a, b) => b.totalPoints - a.totalPoints);
+
+        const filteredList = leaderboard.map((item, index) => ({
+            ...item,
+            rank: index + 1
+        }));
+
+        const champion = filteredList[0] || { name: 'Yet to be decided', chestNumber: '-', team: '-', totalPoints: 0, rank: '-', programs: [] };
+
+        return {
+            champion,
+            leaderboard: filteredList
+        };
     } catch (err) {
-        return { name: 'Error', chestNumber: '-', team: '-', totalPoints: 0 };
+        return {
+            champion: { name: 'Error', chestNumber: '-', team: '-', totalPoints: 0, rank: '-', programs: [] },
+            leaderboard: []
+        };
     }
 }
 
 router.get('/champions', async (req, res) => {
-    const publishSetting = await Setting.findOne({ key: 'championsPublished' });
-    const isPublished = publishSetting ? publishSetting.value : false;
-
-    if (!isPublished) {
-        return res.render('public/champions-hidden', { title: 'Champions - Filhal Fest' });
-    }
-
+    // Public access enabled for everyone
     const champions = {
-        subJuniorBoys: await getTopChampion('Sub Junior', 'Boys'),
-        subJuniorGirls: await getTopChampion('Sub Junior', 'Girls'),
-        juniorBoys: await getTopChampion('Junior', 'Boys'),
-        juniorGirls: await getTopChampion('Junior', 'Girls'),
-        seniorBoys: await getTopChampion('Senior', 'Boys'),
-        seniorGirls: await getTopChampion('Senior', 'Girls')
+        subJuniorBoysData: await getCategoryLeaderboardData('Sub Junior', 'Boys'),
+        subJuniorGirlsData: await getCategoryLeaderboardData('Sub Junior', 'Girls'),
+        juniorBoysData: await getCategoryLeaderboardData('Junior', 'Boys'),
+        juniorGirlsData: await getCategoryLeaderboardData('Junior', 'Girls'),
+        seniorBoysData: await getCategoryLeaderboardData('Senior', 'Boys'),
+        seniorGirlsData: await getCategoryLeaderboardData('Senior', 'Girls')
     };
 
-    res.render('public/champions', { champions, title: 'Individual Champions - Filhal Fest' });
+    res.render('public/champions', { champions, title: 'Individual Champions & Leaderboards - Filhal Fest' });
 });
 
 module.exports = router;
