@@ -12,6 +12,75 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
     
-    <h1>Site on hold</h1>
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md sticky top-0 z-50 py-3">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Changed layout from fixed row to responsive column on mobile, row on larger screens -->
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-4 py-2">
+                <div class="flex-shrink-0 flex items-center">
+                    <a class="navbar-brand flex items-center" href="/">
+                        <img src="/filhal-logoo.png" alt="Filhal Fest Logo" class="w-48 sm:w-64 h-auto object-contain" />
+                    </a>
+                </div>
+                
+                <!-- Added flex-wrap and justify-center so items wrap neatly instead of overflowing -->
+                <div class="flex flex-wrap justify-center items-center gap-3 sm:gap-6 text-sm sm:text-base">
+                    {{#if judge}}
+                        <!-- Judge Portal Navigation -->
+                        <div class="flex items-center gap-2 text-gray-900 font-extrabold mr-2">
+                            <span>⚖️</span>
+                            <span>Judge Portal</span>
+                        </div>
+                        <a href="/judge/dashboard" class="text-gray-600 hover:text-purple-700 font-medium transition">Submit Result</a>
+                        <a href="/judge/results" class="bg-purple-50 text-purple-700 px-3 py-1.5 rounded-md font-bold transition">Manage Results</a>
+                        <a href="/judge/logout" class="text-red-600 hover:text-red-800 font-medium">Logout</a>
+
+                    {{else if admin}}
+                        <!-- Admin Navigation -->
+                        <a href="/" class="text-gray-600 hover:text-indigo-900 font-medium transition">Home</a>
+                        <a href="/results" class="text-gray-600 hover:text-indigo-900 font-medium transition">Results</a>
+                        <a href="/team-results" class="text-gray-600 hover:text-indigo-900 font-medium transition">Team Standings</a>
+                        <a href="/gallery" class="text-gray-600 hover:text-indigo-900 font-medium transition">Media Gallery</a>
+                        <a href="/admin/dashboard" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-md font-bold">Admin Panel</a>
+                        <a href="/logout" class="text-red-600 hover:text-red-800 font-medium">Logout</a>
+
+                    {{else if participant}}
+                        <!-- Participant Navigation -->
+                        <a href="/" class="text-gray-600 hover:text-indigo-900 font-medium transition">Home</a>
+                        <a href="/results" class="text-gray-600 hover:text-indigo-900 font-medium transition">Results</a>
+                        <a href="/team-results" class="text-gray-600 hover:text-indigo-900 font-medium transition">Team Standings</a>
+                        <a href="/gallery" class="text-gray-600 hover:text-indigo-900 font-medium transition">Media Gallery</a>
+                        <a href="/participant/dashboard" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-md font-bold">My Dashboard</a>
+                        <a href="/logout" class="text-red-600 hover:text-red-800 font-medium">Logout</a>
+
+                    {{else}}
+                        <!-- Public Navigation -->
+                        <a href="/" class="text-gray-600 hover:text-indigo-900 font-medium transition">Home</a>
+                        <a href="/results" class="text-gray-600 hover:text-indigo-900 font-medium transition">Results</a>
+                        <a href="/team-results" class="text-gray-600 hover:text-indigo-900 font-medium transition">Team Standings</a>
+                        <a href="/gallery" class="text-gray-600 hover:text-indigo-900 font-medium transition">Media Gallery</a>
+                        <a href="/login" class="bg-indigo-600 text-white px-4 py-2 rounded-md font-medium hover:bg-indigo-700 shadow-sm transition">Participant Login</a>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow w-full">
+        {{{body}}}
+    </main>
+
+    <footer class="bg-gray-900 text-gray-400 py-8 text-center mt-12 space-y-2">
+        <p>&copy; 2026 Filhal Fest Management System. All rights reserved.</p>
+        <div class="text-xs space-x-3 text-gray-500">
+            <a href="/judge/login" class="hover:text-purple-400 transition">Judge Portal</a>
+            <span>•</span>
+            <a href="/admin/login" class="hover:text-red-400 transition">Admin Portal</a>
+        </div>
+    </footer>
+
+    <!-- Canvas Confetti Library -->
+
 </body>
 </html>

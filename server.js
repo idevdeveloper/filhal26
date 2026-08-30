@@ -47,6 +47,32 @@ app.use((req, res, next) => {
     next();
 });
 
+// TEMPORARY LOCKDOWN MIDDLEWARE: Restricts public users to /gallery only, while Admin has full access
+app.use((req, res, next) => {
+    const reqPath = req.path;
+    const isAdmin = res.locals.admin;
+
+    // Allow admins everywhere
+    if (isAdmin) return next();
+
+    // Allow public access only to gallery, login/logout, and admin login pages/assets
+    const isAllowed = 
+        reqPath === '/gallery' || 
+        reqPath.startsWith('/admin') || 
+        reqPath.startsWith('/login') || 
+        reqPath.startsWith('/logout') || 
+        reqPath.startsWith('/images') || 
+        reqPath.startsWith('/css') || 
+        reqPath.startsWith('/js');
+
+    if (isAllowed) {
+        return next();
+    }
+
+    // Redirect all other public pages to the gallery
+    res.redirect('/gallery');
+});
+
 // 6. DATABASE CONNECTION
 const dbURI = process.env.MONGO_URI || 'mongodb+srv://newww:nasir123@cluster1011.ir2agix.mongodb.net/filhalfest?appName=Cluster1011';
 
@@ -108,7 +134,7 @@ app.get('/admin/photos/manage', async (req, res) => {
     }
 });
 
-// Multiple Upload Handler with Fixed 1080x1350 (Portrait) and 1080x566 (Landscape) Dimensions
+// Multiple Upload Handler with 1080x1350 (Portrait) and 1536x1152 (Landscape) Dimensions
 app.post('/admin/photos/upload', upload.array('photo', 20), async (req, res) => {
     if (!res.locals.admin) return res.status(403).send('Unauthorized');
     try {
@@ -117,7 +143,7 @@ app.post('/admin/photos/upload', upload.array('photo', 20), async (req, res) => 
         const gender = req.body.gender || 'boys';
         const orientation = req.body.orientation || 'portrait';
 
-        // Set exact dimensions: 1080x1350 for portrait, 1536x1152 for landscape
+        // Set dimensions: 1080x1350 for portrait, 1536x1152 for landscape
         const width = orientation === 'landscape' ? 1536 : 1080;
         const height = orientation === 'landscape' ? 1152 : 1350;
 
